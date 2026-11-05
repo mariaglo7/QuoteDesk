@@ -34,14 +34,14 @@ export const DEFAULT_SETTINGS = {
   terms: {
     pl: [
       { key: 'payment', bold: 'Płatność', text: 'przelewem: 50% przed startem, 50% przy przekazaniu plików, termin 7 dni.' },
-      { key: 'revisions', bold: 'Poprawki', text: 'dwie rundy w cenie, każda kolejna {extraRound}.' },
+      { key: 'revisions', bold: 'Poprawki', text: ': dwie rundy w cenie, każda kolejna {extraRound}.' },
       { key: 'rights', bold: 'Prawa', text: 'do projektów przechodzą na klienta po pełnej płatności.' },
       { key: 'print', bold: 'Druk', text: 'zamawia klient w wybranej drukarni. Przygotuję pliki pod jej wymagania.' },
       { key: 'hosting', bold: 'Hosting', text: 'i domenę klient kupuje na swoim koncie, nie są wliczone w cenę strony.' },
     ],
     en: [
       { key: 'payment', bold: 'Payment', text: 'by bank transfer: 50% before we start, 50% on handover, due in 7 days.' },
-      { key: 'revisions', bold: 'Revisions', text: 'two rounds included, each extra round {extraRound}.' },
+      { key: 'revisions', bold: 'Revisions', text: ': two rounds included, each extra round {extraRound}.' },
       { key: 'rights', bold: 'Rights', text: 'to the designs pass to the client after full payment.' },
       { key: 'print', bold: 'Printing', text: 'is ordered by the client from a printer of their choice. I prepare the files to its requirements.' },
       { key: 'hosting', bold: 'Hosting', text: 'and the domain are bought by the client on their own account and are not included in the website price.' },

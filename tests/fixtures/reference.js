@@ -41,7 +41,7 @@ export const REFERENCE = {
     },
     {
       id: 's2', type: 'services', eyebrow: '', title: '', intro: '', note: '',
-      items: [item('u1', 'Ulotka A5 dwustronna', 75, { description: 'W stylu katalogu. Przód: mocne pierwsze wrażenie i czym jest Harbour Light Co. Tył: najważniejsze korzyści i serie, telefon oraz kod QR do katalogu.' })],
+      items: [item('u1', 'Ulotka A5 dwustronna', 75, { category: 'print', description: 'W stylu katalogu. Przód: mocne pierwsze wrażenie i czym jest Harbour Light Co. Tył: najważniejsze korzyści i serie, telefon oraz kod QR do katalogu.' })],
     },
     {
       id: 's3', type: 'bundles', eyebrow: '', title: '', intro: '', note: '', style: 'rows',

@@ -5,6 +5,7 @@ import { THEME } from './theme.js';
 export function createFlow({ doc, header }) {
   const flow = {
     y: THEME.contentTop,
+    pendingHead: null,
     get pageCount() {
       return doc.getNumberOfPages();
     },
@@ -15,6 +16,10 @@ export function createFlow({ doc, header }) {
     },
     ensure(height) {
       if (flow.y + height > THEME.bottom) flow.newPage();
+      if (flow.pendingHead) {
+        flow.pendingHead.nextBlockPage = doc.getNumberOfPages();
+        flow.pendingHead = null;
+      }
     },
     wrap(text, font, size, width) {
       doc.setFont('Poppins', font);

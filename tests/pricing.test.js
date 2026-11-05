@@ -116,6 +116,11 @@ test('hasPrint is only for category print', () => {
   assert.equal(calcQuote(servicesQuote([item('flyer')]), S).hasPrint, true);
 });
 
+test('custom item category counts for hasPrint', () => {
+  const t = calcQuote(servicesQuote([item(null, { id: 'x', unitPriceOverride: 75, category: 'print' })]), S);
+  assert.equal(t.hasPrint, true);
+});
+
 test('default settings match the agreed values', () => {
   const m = Object.fromEntries(DEFAULT_SETTINGS.clientTypes.map((c) => [c.id, c.multiplier]));
   assert.deepEqual(m, { sole: 1, local: 1.2, intermediary: 1.2, medium: 1.4, large: 1.6 });

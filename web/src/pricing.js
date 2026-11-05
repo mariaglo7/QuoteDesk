@@ -51,8 +51,8 @@ export function calcQuote(quote, settings) {
   for (const section of quote.sections) {
     for (const item of section.items ?? []) {
       items[item.id] = priceItem(item, quote, settings);
-      const service = findService(item, settings);
-      if (service) categories.add(service.category);
+      const category = findService(item, settings)?.category ?? item.category;
+      if (category) categories.add(category);
     }
   }
 
