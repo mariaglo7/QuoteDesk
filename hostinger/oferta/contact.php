@@ -44,7 +44,7 @@ $who = preg_replace('/[\r\n]+/', ' ', (string)($offer['company'] ?: $offer['name
 $lines = ["$who chce porozmawiać o ofercie.", '', 'Osoba: ' . ($offer['name'] ?? ''), 'Data oferty: ' . ($offer['date'] ?? ''), 'Oferta ważna do: ' . $offer['exp']];
 $subject = '=?UTF-8?B?' . base64_encode("$who chce porozmawiać o ofercie") . '?=';
 $headers = "From: " . MAIL_TO . "\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8";
-if (!mail(MAIL_TO, $subject, implode("\n", $lines), $headers)) {
+if (!@mail(MAIL_TO, $subject, implode("\n", $lines), $headers)) {
     unlink($marker);
     reply(['ok' => false, 'error' => 'server']);
 }
