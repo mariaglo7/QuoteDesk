@@ -1,7 +1,7 @@
 // Code written with help from Claude (Anthropic)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { roundUp5, bundlePrice, priceItem, calcQuote } from '../web/src/pricing.js';
+import { roundUp5, bundlePrice, priceItem, calcQuote, freezePrices } from '../web/src/pricing.js';
 import { DEFAULT_SETTINGS } from '../web/src/defaults.js';
 
 const S = {
@@ -123,6 +123,28 @@ test('hasPrint is only for category print', () => {
 test('custom item category counts for hasPrint', () => {
   const t = calcQuote(servicesQuote([item(null, { id: 'x', unitPriceOverride: 75, category: 'print' })]), S);
   assert.equal(t.hasPrint, true);
+});
+
+test('needsCheck item needs price even with a known service', () => {
+  assert.equal(priceItem(item('post', { needsCheck: true }), quote(), S).needsPrice, true);
+});
+
+test('a service without a price needs price', () => {
+  const free = { ...S, priceList: [{ id: 'x', price: 0, unit: 'item', category: 'other', applyMultiplier: true }, { id: 'y', price: null, unit: 'item', category: 'other', applyMultiplier: false }] };
+  assert.equal(priceItem(item('x'), quote(), free).needsPrice, true);
+  assert.equal(priceItem(item('y'), quote(), free).needsPrice, true);
+});
+
+test('freezePrices keeps prices when the price list changes', () => {
+  const q = quote({ clientTypeId: 'local', sections: [
+    { id: 's', type: 'services', items: [item('logo')] },
+    { id: 'b', type: 'bundles', bundles: [{ id: 'b1', name: 'A', itemIds: ['i_logo'], priceOverride: null }] },
+  ] });
+  const frozen = { ...q, sections: freezePrices(q, calcQuote(q, S)) };
+  const dearer = { ...S, priceList: S.priceList.map((p) => (p.id === 'logo' ? { ...p, price: 999 } : p)) };
+  const t = calcQuote(frozen, dearer);
+  assert.equal(t.items.i_logo.unitPrice, 240);
+  assert.equal(t.bundles.b1.price, calcQuote(q, S).bundles.b1.price);
 });
 
 test('default settings match the agreed values', () => {

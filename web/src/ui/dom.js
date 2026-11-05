@@ -59,11 +59,21 @@ export async function copyText(text, target, toast) {
 }
 
 export function debounce(fn, ms) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), ms);
+  let timer = null;
+  const run = () => {
+    timer = null;
+    return fn();
   };
+  const debounced = () => {
+    clearTimeout(timer);
+    timer = setTimeout(run, ms);
+  };
+  debounced.flush = () => {
+    if (timer === null) return undefined;
+    clearTimeout(timer);
+    return run();
+  };
+  return debounced;
 }
 
 export function claudeErrorText(e) {

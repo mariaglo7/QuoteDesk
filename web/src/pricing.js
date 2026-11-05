@@ -17,6 +17,7 @@ function findService(item, settings) {
 }
 
 function basePrice(service, quote, settings) {
+  if (!service.price) return null;
   if (!service.applyMultiplier) return service.price;
   const type = settings.clientTypes.find((c) => c.id === quote.clientTypeId);
   const rush = quote.rush ? 1 + settings.rushRate : 1;
@@ -32,8 +33,17 @@ export function priceItem(item, quote, settings) {
     lineTotal: unitPrice === null ? null : unitPrice * qty,
     monthly: service ? service.unit === 'month' : Boolean(item.monthly),
     priceFrom: Boolean(item.priceFrom || service?.priceFrom),
-    needsPrice: unitPrice === null,
+    needsPrice: unitPrice === null || Boolean(item.needsCheck),
   };
+}
+
+/** Turns computed prices into overrides, so a sent offer no longer follows the price list. */
+export function freezePrices(quote, totals) {
+  return quote.sections.map((section) => ({
+    ...section,
+    ...(section.items && { items: section.items.map((item) => ({ ...item, unitPriceOverride: totals.items[item.id].unitPrice })) }),
+    ...(section.bundles && { bundles: section.bundles.map((b) => ({ ...b, priceOverride: totals.bundles[b.id].price })) }),
+  }));
 }
 
 function estimatedItems(section) {

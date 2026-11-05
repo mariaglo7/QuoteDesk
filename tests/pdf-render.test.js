@@ -9,14 +9,14 @@ import { REFERENCE } from './fixtures/reference.js';
 import { FONTS, LOGOS, recordingPdf } from './fixtures/pdf.js';
 
 function render(quote = REFERENCE, settings = S, extra = {}) {
-  const { RecordingPdf, texts } = recordingPdf();
+  const { RecordingPdf, texts, calls } = recordingPdf();
   const totals = extra.totals ?? calcQuote(quote, settings);
   const report = {};
   const doc = renderOfferPdf({
     jsPDF: RecordingPdf, fonts: FONTS, logos: LOGOS, coverImage: null, quote, totals, settings,
     offerUrl: 'https://designbymaria.co.uk/oferta/#a.b', today: '2026-10-22', report, ...extra,
   });
-  return { doc, all: texts.join(' | '), texts, report };
+  return { doc, all: texts.join(' | '), texts, calls, report };
 }
 
 const simple = (over = {}) => ({
@@ -144,6 +144,79 @@ test('empty sections are skipped', () => {
   q.sections = [...q.sections, { id: 'e1', type: 'options', eyebrow: 'E', title: 'Pusta', intro: '', note: '', recommendedId: null, items: [] }, { id: 'e2', type: 'services', eyebrow: '', title: 'Pusta2', intro: '', note: '', items: [] }];
   const { all } = render(q);
   assert.ok(!all.includes('Pusta'));
+});
+
+const svc = (id, extra = {}) => ({ id, serviceId: null, name: id, subtitle: '', description: '', bullets: [], qty: 1, unitPriceOverride: 100, priceFrom: false, subNote: '', ...extra });
+const long = (n) => 'Długi tekst oferty z wieloma słowami, który zawija się na kolejne linijki. '.repeat(n);
+
+test('a card taller than a page is trimmed and reported', () => {
+  const bullets = Array.from({ length: 40 }, () => 'Punkt oferty z dłuższym opisem, który zawija się do drugiej linijki');
+  const section = { id: 'o', type: 'options', eyebrow: 'E', title: 'T', intro: '', note: '', recommendedId: 'a', items: [svc('a', { bullets }), svc('b', { bullets })] };
+  const { report } = render(simple({ sections: [section] }));
+  assert.ok(report.cardRows[0].bottom <= THEME.bottom, `bottom ${report.cardRows[0].bottom}`);
+  assert.ok(report.overflow.length > 0);
+});
+
+test('a very long service description stays on the page', () => {
+  const section = { id: 's', type: 'services', eyebrow: '', title: 'T', intro: '', note: '', items: [svc('a', { description: long(100) })] };
+  const { calls, report } = render(simple({ sections: [section] }));
+  for (const c of calls) assert.ok(c.y <= THEME.bottom + 40, `y ${c.y}`);
+  assert.ok(report.overflow.length > 0);
+});
+
+test('head stays with six bundle rows', () => {
+  const filler = { id: 'f', type: 'services', eyebrow: '', title: '', intro: '', note: '', items: Array.from({ length: 6 }, (_, i) => svc(`f${i}`, { description: long(2) })) };
+  const rows = { id: 'b', type: 'bundles', style: 'rows', eyebrow: 'E', title: 'Pakiety', intro: '', note: '', bundles: Array.from({ length: 6 }, (_, i) => ({ id: `b${i}`, name: `Pakiet ${i}`, itemIds: ['f0'], priceOverride: null, caption: '' })) };
+  const { report } = render(simple({ sections: [filler, rows] }));
+  for (const head of report.heads) assert.equal(head.page, head.nextBlockPage);
+});
+
+test('head stays with a banner of eight labels', () => {
+  const filler = { id: 'f', type: 'services', eyebrow: '', title: '', intro: '', note: '', items: Array.from({ length: 7 }, (_, i) => svc(`f${i}`, { description: long(2) })) };
+  const banner = { id: 'b', type: 'bundles', style: 'banner', eyebrow: 'E', title: 'Pakiet', intro: '', note: '', bundles: [{ id: 'b0', name: 'Pakiet', itemIds: ['f0'], priceOverride: null, caption: '', labels: Array.from({ length: 8 }, (_, i) => `Etykieta ${i}`) }] };
+  const { report } = render(simple({ sections: [filler, banner] }));
+  for (const head of report.heads) assert.equal(head.page, head.nextBlockPage);
+});
+
+test('a wrapped section title does not touch the intro', () => {
+  const section = { id: 's', type: 'services', eyebrow: 'E', title: long(2), intro: 'Unikalny wstęp sekcji.', note: '', items: [svc('a')] };
+  const { calls } = render(simple({ sections: [section] }));
+  const title = calls.filter((c) => c.value.startsWith('Długi') || c.value.includes('oferty z wieloma') || c.value.includes('linijki')).filter((c) => c.page === 2);
+  const intro = calls.find((c) => c.value === 'Unikalny wstęp sekcji.');
+  assert.ok(intro.y > Math.max(...title.map((c) => c.y)) + 10);
+});
+
+test('a long service name wraps clear of the price', () => {
+  const section = { id: 's', type: 'services', eyebrow: '', title: 'T', intro: '', note: '', items: [svc('a', { name: long(2) })] };
+  const { calls } = render(simple({ sections: [section] }));
+  const lines = calls.filter((c) => c.page === 2 && c.x === THEME.margin && String(c.value).length > 5 && !c.align && c.y < 300);
+  assert.ok(lines.length >= 2);
+  for (const c of lines) assert.ok(c.x + c.width < THEME.margin + 420, `right edge ${c.x + c.width}`);
+});
+
+test('long bundle names stay clear of the prices', () => {
+  const q = simple();
+  q.sections = [...q.sections, { id: 'b', type: 'bundles', style: 'rows', bundles: [{ id: 'b1', name: long(1), itemIds: ['a'], priceOverride: null, caption: '' }] }];
+  const { calls } = render(q);
+  for (const c of calls.filter((x) => x.value.startsWith('Długi') || x.value.includes('oferty z'))) assert.ok(c.x + c.width < THEME.margin + 370, `right edge ${c.x + c.width}`);
+});
+
+test('many needs rows stay on the cover', () => {
+  const needs = Array.from({ length: 6 }, () => ({ label: 'Etykieta', text: long(1) }));
+  const { calls, report } = render(simple({ needs, client: { name: 'A', company: 'Highland Premium Skylight And Roof Window Engineering Company Limited', email: '' } }));
+  for (const c of calls.filter((x) => x.page === 1)) assert.ok(c.y <= 825, `y ${c.y}`);
+  assert.ok(report.cover);
+});
+
+test('a long client name stays out of the dark panel', () => {
+  const { calls } = render(simple({ client: { name: long(1), company: 'Firma', email: '' } }));
+  const line = calls.find((c) => c.page === 1 && String(c.value).startsWith('Dla:'));
+  assert.ok(line.x + line.width <= THEME.panelX - 10, `right edge ${line.x + line.width}`);
+});
+
+test('an intro without a title is kept, an eyebrow alone draws no title', () => {
+  const section = { id: 's', type: 'services', eyebrow: '', title: '', intro: 'Sam wstęp.', note: '', items: [svc('a')] };
+  assert.ok(render(simple({ sections: [section] })).all.includes('Sam wstęp.'));
 });
 
 test('no bank details', () => {

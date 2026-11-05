@@ -1,6 +1,6 @@
 // Code written with help from Claude (Anthropic)
 import { t, uiLang } from '../i18n.js';
-import { h, field, textInput, textArea, numberInput, linesArea, copyText } from './dom.js';
+import { h, field, textInput, textArea, numberInput, linesArea, copyText, debounce } from './dom.js';
 import { newId } from '../quote.js';
 
 const UNITS = [['item', 'sztuka'], ['page', 'podstrona'], ['month', 'miesiąc']];
@@ -46,18 +46,23 @@ export function renderSettings(root, ctx) {
   const page = h('div', { class: 'page narrow' });
   root.append(page);
   const status = h('span', { class: 'small muted' });
-  const changed = () => { status.textContent = t('Masz niezapisane zmiany'); };
 
   async function save() {
     try {
       await store.saveSettings(settings);
-      status.textContent = '';
-      toast(t('Zapisano ustawienia'));
+      status.textContent = t('Zapisano');
       ctx.refreshBanners();
     } catch {
-      toast(t('Nie udało się zapisać. Spróbuj ponownie.'));
+      status.textContent = t('Nie udało się zapisać. Spróbuj ponownie.');
     }
   }
+
+  const autosave = debounce(save, 800);
+  const changed = () => {
+    status.textContent = t('Zapisuję…');
+    autosave();
+  };
+  ctx.leave = () => autosave.flush();
 
   function draw() {
     const secret = h('input', { readOnly: true, value: settings.linkSecret });
@@ -70,7 +75,7 @@ export function renderSettings(root, ctx) {
         h('div', {}, h('button', {
           class: 'btn',
           onClick: () => {
-            settings.priceList.push({ id: newId(), namePl: '', nameEn: '', descPl: '', descEn: '', bulletsPl: [], bulletsEn: [], price: 0, priceFrom: false, unit: 'item', category: 'other', applyMultiplier: true });
+            settings.priceList.push({ id: newId(), namePl: '', nameEn: '', descPl: '', descEn: '', bulletsPl: [], bulletsEn: [], price: null, priceFrom: false, unit: 'item', category: 'other', applyMultiplier: true });
             changed();
             draw();
             page.querySelectorAll('details')[settings.priceList.length - 1].open = true;
@@ -103,7 +108,7 @@ export function renderSettings(root, ctx) {
         field(t('Klucz do podpisywania linków, wklej go do config.php na serwerze'), secret),
         h('div', {}, h('button', { class: 'btn', onClick: () => copyText(settings.linkSecret, secret, toast) }, t('Kopiuj klucz'))),
       ),
-      h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: save }, t('Zapisz ustawienia')), status),
+      h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: () => autosave.flush() ?? save() }, t('Zapisz ustawienia')), status),
     );
   }
   draw();

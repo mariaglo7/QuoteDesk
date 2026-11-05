@@ -120,7 +120,7 @@ export function drawCover(doc, { logos, coverImage, quote, L, flow, today, setti
   let y = titleBottom + 40;
   setText(doc, 'light', 12, T.muted);
   if (quote.client.name) {
-    doc.text(`${L.forPerson} ${quote.client.name}`, m, y);
+    doc.text(flow.wrap(`${L.forPerson} ${quote.client.name}`, 'light', 12, leftWidth - 20)[0], m, y);
     y += 18;
   }
   setText(doc, 'light', 8.5, T.muted);
@@ -129,8 +129,24 @@ export function drawCover(doc, { logos, coverImage, quote, L, flow, today, setti
 
   const labelW = 90;
   const textW = T.panelX - m - 28 - labelW;
-  const rows = quote.needs.map((n) => ({ ...n, lines: flow.wrap(n.text, 'light', 9.3, textW) }));
-  const rowsHeight = rows.reduce((sum, r) => sum + r.lines.length * 14.3 + 18, 0);
+  const bottomLimit = 812;
+  const layout = (fontSize) => {
+    const list = quote.needs.map((n) => ({ ...n, lines: flow.wrap(n.text, 'light', fontSize, textW) }));
+    const rowHeight = (r) => r.lines.length * fontSize * 1.54 + 18;
+    return { list, rowHeight, total: list.reduce((sum, r) => sum + rowHeight(r), 0) };
+  };
+  const room = bottomLimit - (y + 34) - 15;
+  let needsSize = 9.3;
+  let fitted = layout(needsSize);
+  while (fitted.total > room && needsSize > 7.6) {
+    needsSize -= 0.5;
+    fitted = layout(needsSize);
+  }
+  const rows = fitted.list;
+  while (rows.length && rows.reduce((sum, r) => sum + fitted.rowHeight(r), 0) > room) {
+    report.overflow.push(rows.pop().label);
+  }
+  const rowsHeight = rows.reduce((sum, r) => sum + fitted.rowHeight(r), 0);
   const needsTop = Math.max(y + 34, 788 - rowsHeight - 30);
   if (rows.length) {
     setText(doc, 'medium', 7.5, T.muted);
@@ -138,11 +154,11 @@ export function drawCover(doc, { logos, coverImage, quote, L, flow, today, setti
     let ry = needsTop + 15;
     for (const row of rows) {
       hairline(doc, m, ry, T.panelX - 28);
-      setText(doc, 'light', 9.3, T.muted);
+      setText(doc, 'light', needsSize, T.muted);
       doc.text(row.label, m, ry + 19);
-      setText(doc, 'light', 9.3, T.ink);
-      drawLines(doc, row.lines, m + labelW, ry + 19, 9.3, 1.54);
-      ry += row.lines.length * 14.3 + 18;
+      setText(doc, 'light', needsSize, T.ink);
+      drawLines(doc, row.lines, m + labelW, ry + 19, needsSize, 1.54);
+      ry += fitted.rowHeight(row);
     }
   }
 
@@ -155,11 +171,17 @@ export function drawCover(doc, { logos, coverImage, quote, L, flow, today, setti
   };
 }
 
+const TITLE_LEADING = 21 * 1.15;
+const MAX_CARD_HEIGHT = 500;
+const MAX_DESCRIPTION_LINES = 30;
+
 /** Height of the section head, 0 when the section has no heading. */
 export function measureSectionHead(section, flow) {
-  if (!section.title && !section.eyebrow) return 0;
+  if (!section.title && !section.eyebrow && !section.intro) return 0;
+  const title = section.title ? flow.wrap(section.title, 'semibold', 21, T.contentWidth) : [];
   const intro = section.intro ? flow.wrap(section.intro, 'light', 11, 400) : [];
-  return 70 + intro.length * 17.5 + (intro.length ? 8 : 0);
+  const titleHeight = title.length ? 46 + (title.length - 1) * TITLE_LEADING + 28 : 22;
+  return titleHeight + intro.length * 17.5 + (intro.length ? 8 : 0);
 }
 
 export function drawSectionHead(doc, section, flow) {
@@ -169,10 +191,15 @@ export function drawSectionHead(doc, section, flow) {
     setText(doc, 'medium', 7.5, T.muted);
     doc.text(section.eyebrow.toUpperCase(), m, y + 14, { charSpace: 1.8 });
   }
-  y += 46;
-  setText(doc, 'semibold', 21, T.ink);
-  titleWithDot(doc, flow.wrap(section.title, 'semibold', 21, T.contentWidth), m, y, 21, 1.15);
-  y += 28;
+  if (section.title) {
+    const lines = flow.wrap(section.title, 'semibold', 21, T.contentWidth);
+    y += 46;
+    setText(doc, 'semibold', 21, T.ink);
+    titleWithDot(doc, lines, m, y, 21, 1.15);
+    y += (lines.length - 1) * TITLE_LEADING + 28;
+  } else {
+    y += 22;
+  }
   if (section.intro) {
     const lines = flow.wrap(section.intro, 'light', 11, 400);
     setText(doc, 'light', 11, T.muted);
@@ -247,17 +274,28 @@ function drawCard(doc, item, priced, m, x, y, width, height, dark, L) {
   }
 }
 
+const cardHeight = (m) => m.headHeight + 39 + m.bulletsHeight;
+
 export function measureOptionRow(section, flow) {
   const n = section.items.length;
   const gap = n === 2 ? 16 : 13;
   const width = (T.contentWidth - gap * (n - 1)) / n;
   const measures = section.items.map((item) => measureCard(item, width, flow));
-  const height = Math.max(...measures.map((m) => m.headHeight + 39 + m.bulletsHeight)) + 12;
-  return { n, gap, width, measures, height };
+  let clipped = false;
+  for (;;) {
+    const tallest = measures.reduce((a, b) => (cardHeight(b) > cardHeight(a) ? b : a));
+    if (cardHeight(tallest) + 12 <= MAX_CARD_HEIGHT || tallest.bullets.length === 0) break;
+    const removed = tallest.bullets.pop();
+    tallest.bulletsHeight -= removed.length * 14 + 7;
+    clipped = true;
+  }
+  const height = Math.max(...measures.map(cardHeight)) + 12;
+  return { n, gap, width, measures, height, clipped };
 }
 
 export function drawOptionCards(doc, section, totals, flow, L, report) {
-  const { gap, width, measures, height } = measureOptionRow(section, flow);
+  const { gap, width, measures, height, clipped } = measureOptionRow(section, flow);
+  if (clipped) report.overflow.push(section.title || section.items[0].name);
   flow.ensure(height + 8);
   const y = flow.y + 4;
   section.items.forEach((item, i) => {
@@ -269,20 +307,25 @@ export function drawOptionCards(doc, section, totals, flow, L, report) {
 }
 
 export function measureServiceRow(item, flow) {
-  const lines = item.description ? flow.wrap(item.description, 'light', 8.8, 420) : [];
-  return { lines, height: 34 + lines.length * 14.5 + 12 };
+  const nameLines = flow.wrap(item.name, 'medium', 11.5, 395);
+  const all = item.description ? flow.wrap(item.description, 'light', 8.8, 420) : [];
+  const clipped = all.length > MAX_DESCRIPTION_LINES;
+  const lines = clipped ? [...all.slice(0, MAX_DESCRIPTION_LINES - 1), `${all[MAX_DESCRIPTION_LINES - 1]}…`] : all;
+  const nameExtra = (nameLines.length - 1) * 15;
+  return { nameLines, nameExtra, lines, clipped, height: 34 + nameExtra + lines.length * 14.5 + 12 };
 }
 
-export function drawServiceRows(doc, section, totals, flow, L) {
+export function drawServiceRows(doc, section, totals, flow, L, report) {
   const right = T.margin + T.contentWidth;
   for (const item of section.items) {
-    const { lines, height } = measureServiceRow(item, flow);
+    const { nameLines, nameExtra, lines, clipped, height } = measureServiceRow(item, flow);
+    if (clipped) report.overflow.push(item.name);
     flow.ensure(height);
     const y = flow.y;
     const priced = totals.items[item.id];
     hairline(doc, T.margin, y, right);
     setText(doc, 'medium', 11.5, T.ink);
-    doc.text(item.name, T.margin, y + 26);
+    drawLines(doc, nameLines, T.margin, y + 26, 11.5, 1.3);
     setText(doc, 'semibold', 12.5, T.ink);
     const price = priced.lineTotal === null ? '' : priceLabel(priced, L) + (priced.monthly ? ` ${L.perMonth}` : '');
     doc.text(price, right, y + 26, { align: 'right' });
@@ -291,23 +334,34 @@ export function drawServiceRows(doc, section, totals, flow, L) {
       doc.text(item.subNote, right, y + 40, { align: 'right' });
     }
     setText(doc, 'light', 8.8, T.ink);
-    drawLines(doc, lines, T.margin, y + 46, 8.8, 1.65);
+    drawLines(doc, lines, T.margin, y + 46 + nameExtra, 8.8, 1.65);
     flow.y = y + height;
   }
   hairline(doc, T.margin, flow.y, right);
   flow.y += 12;
 }
 
+const bundleLines = (bundle, flow) => flow.wrap(bundle.name, 'light', 9.3, 360);
+const bundleRowHeight = (lines) => 25 + (lines.length - 1) * 13.5;
+
+/** Room for the opening rule and the first row. */
+export function measureBundleStart(section, flow) {
+  return 13 + bundleRowHeight(bundleLines(section.bundles[0], flow)) + 14;
+}
+
 export function drawBundleRows(doc, section, totals, flow) {
   const right = T.margin + T.contentWidth;
-  flow.ensure(section.bundles.length * 25 + 12);
+  flow.ensure(measureBundleStart(section, flow));
   hairline(doc, T.margin, flow.y, right, T.ink, 1.3);
   flow.y += 13;
   for (const bundle of section.bundles) {
+    const lines = bundleLines(bundle, flow);
+    const height = bundleRowHeight(lines);
+    flow.ensure(height);
     const priced = totals.bundles[bundle.id];
     const y = flow.y;
     setText(doc, 'light', 9.3, T.ink);
-    doc.text(bundle.name, T.margin, y + 14);
+    drawLines(doc, lines, T.margin, y + 14, 9.3, 1.45);
     setText(doc, 'semibold', 9.3, T.ink);
     const price = formatMoney(priced.price);
     const px = right - 17 - doc.getTextWidth(price);
@@ -317,30 +371,43 @@ export function drawBundleRows(doc, section, totals, flow) {
     const ox = px - 9 - doc.getTextWidth(old);
     doc.text(old, ox, y + 14);
     strike(doc, old, ox, y + 14, T.muted);
-    hairline(doc, T.margin, y + 24.5, right);
-    flow.y = y + 25;
+    hairline(doc, T.margin, y + height - 0.5, right);
+    flow.y = y + height;
   }
   flow.y += 14;
+}
+
+function bannerLabels(bundle, quote) {
+  const items = quote.sections.flatMap((s) => s.items ?? []);
+  return bundle.labels ?? bundle.itemIds.map((id) => items.find((i) => i.id === id)?.name).filter(Boolean);
+}
+
+export function measureBanner(bundle, quote, flow) {
+  const nameLines = flow.wrap(bundle.name, 'semibold', 15, 300);
+  const labels = bannerLabels(bundle, quote).map((label) => {
+    const lines = flow.wrap(label, 'light', 9, 158);
+    return lines.length > 1 ? `${lines[0]}…` : lines[0];
+  });
+  const rows = Math.ceil(labels.length / 2);
+  const nameExtra = (nameLines.length - 1) * 19;
+  return { nameLines, nameExtra, labels, rows, height: Math.max(44 + nameExtra + rows * 18 + 20, 96) };
 }
 
 export function drawBundleBanner(doc, section, totals, flow, quote) {
   const right = T.margin + T.contentWidth;
   for (const bundle of section.bundles) {
-    const items = quote.sections.flatMap((s) => s.items ?? []);
-    const labels = bundle.labels ?? bundle.itemIds.map((id) => items.find((i) => i.id === id)?.name).filter(Boolean);
-    const rows = Math.ceil(labels.length / 2);
-    const height = 44 + rows * 18 + 20;
+    const { nameLines, nameExtra, labels, rows, height } = measureBanner(bundle, quote, flow);
     flow.ensure(height + 16);
     const y = flow.y + 6;
     doc.setFillColor(T.ink);
     doc.roundedRect(T.margin, y, T.contentWidth, height, T.cardRadius, T.cardRadius, 'F');
     setText(doc, 'semibold', 15, T.pink);
-    doc.text(bundle.name, T.margin + 23, y + 33);
+    drawLines(doc, nameLines, T.margin + 23, y + 33, 15, 1.27);
     labels.forEach((label, i) => {
       const col = Math.floor(i / rows);
       const row = i % rows;
       const lx = T.margin + 23 + col * 186;
-      const ly = y + 55 + row * 18;
+      const ly = y + 55 + nameExtra + row * 18;
       check(doc, lx, ly - 2.4, T.pink);
       setText(doc, 'light', 9, T.white);
       doc.text(label, lx + 10, ly);

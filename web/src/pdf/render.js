@@ -5,7 +5,7 @@ import { createFlow } from './layout.js';
 import { formatMoney } from '../text.js';
 import {
   LABELS, drawCover, drawPageHeader, measureSectionHead, drawSectionHead, measureOptionRow, drawOptionCards,
-  measureServiceRow, drawServiceRows, drawBundleRows, drawBundleBanner, drawInfoCards, drawNote, drawTerms, drawHostingerPage,
+  measureServiceRow, drawServiceRows, measureBanner, measureBundleStart, drawBundleRows, drawBundleBanner, drawInfoCards, drawNote, drawTerms, drawHostingerPage,
 } from './blocks.js';
 
 function visibleTerms(settings, lang, totals) {
@@ -17,9 +17,11 @@ function visibleTerms(settings, lang, totals) {
 }
 
 /** Room the first block of a section needs, so a head never stays alone at the page bottom. */
-function firstBlockHeight(section, flow) {
+function firstBlockHeight(section, flow, ctx) {
   if (section.type === 'options') return measureOptionRow(section, flow).height + 18;
-  if (section.type === 'services' && section.items[0]) return measureServiceRow(section.items[0], flow).height;
+  if (section.type === 'services') return measureServiceRow(section.items[0], flow).height;
+  if (section.type === 'bundles' && section.style === 'banner') return measureBanner(section.bundles[0], ctx.quote, flow).height + 16;
+  if (section.type === 'bundles') return measureBundleStart(section, flow);
   return 90;
 }
 
@@ -30,14 +32,14 @@ function drawSection(doc, section, ctx) {
   if (section.newPage && flow.y > THEME.contentTop) flow.newPage();
   const headHeight = measureSectionHead(section, flow);
   if (headHeight) {
-    flow.ensure(headHeight + firstBlockHeight(section, flow));
+    flow.ensure(headHeight + firstBlockHeight(section, flow, ctx));
     const page = doc.getNumberOfPages();
     drawSectionHead(doc, section, flow);
     flow.pendingHead = { page, nextBlockPage: null };
     report.heads.push(flow.pendingHead);
   }
   if (section.type === 'options') drawOptionCards(doc, section, totals, flow, L, report);
-  if (section.type === 'services') drawServiceRows(doc, section, totals, flow, L);
+  if (section.type === 'services') drawServiceRows(doc, section, totals, flow, L, report);
   if (section.type === 'bundles' && section.style === 'banner') drawBundleBanner(doc, section, totals, flow, quote);
   if (section.type === 'bundles' && section.style !== 'banner') drawBundleRows(doc, section, totals, flow);
   if (section.type === 'info') drawInfoCards(doc, section, flow, L, settings, quote.lang);
@@ -50,6 +52,7 @@ export function renderOfferPdf({ jsPDF, fonts, logos, coverImage = null, quote, 
   const L = LABELS[quote.lang] ?? LABELS.pl;
   report.cardRows = [];
   report.heads = [];
+  report.overflow = [];
   doc.setProperties({ title: `${L.offerFor} ${quote.client.company || quote.client.name}` });
 
   const flow = createFlow({ doc, header: (page) => drawPageHeader(doc, { logos, quote, L, page }) });

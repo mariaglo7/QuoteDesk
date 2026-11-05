@@ -20,7 +20,7 @@ function quoteFromExtraction(extraction, message) {
 
 export function renderInbox(root, ctx) {
   const { sample, settings, navigate } = ctx;
-  const box = h('textarea', { id: 'client-message', rows: 10, placeholder: t('Hej! Otwieram piekarnię w Aberdeen i potrzebuję logo i prostej strony…') });
+  const box = h('textarea', { id: 'client-message', rows: 10, value: ctx.inboxDraft, onInput: (e) => { ctx.inboxDraft = e.target.value; }, placeholder: t('Hej! Otwieram piekarnię w Aberdeen i potrzebuję logo i prostej strony…') });
   const error = h('p', { class: 'error', role: 'alert' });
 
   async function read(button) {
@@ -33,12 +33,19 @@ export function renderInbox(root, ctx) {
       navigate('desk', { ...newQuote(), sourceMessage: message });
       return;
     }
+    const token = ctx.navToken;
     button.disabled = true;
     button.textContent = t('Czytam wiadomość…');
     error.textContent = '';
     try {
       const raw = await sample.json(buildExtractPrompt(message, settings, toISODate(new Date())));
       const quote = quoteFromExtraction(parseExtraction(raw, settings, toISODate(new Date())), message);
+      await ctx.store.saveQuote(quote);
+      ctx.inboxDraft = '';
+      if (ctx.navToken !== token) {
+        ctx.toast(t('Oferta czeka na liście ofert.'));
+        return;
+      }
       ctx.autoCopy = quote.sections.length > 0;
       navigate('desk', quote);
     } catch (e) {
@@ -49,7 +56,7 @@ export function renderInbox(root, ctx) {
         return;
       }
       ctx.toast(claudeErrorText(e));
-      navigate('desk', { ...newQuote(), sourceMessage: message });
+      if (ctx.navToken === token) navigate('desk', { ...newQuote(), sourceMessage: message });
     }
   }
 

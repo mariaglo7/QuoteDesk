@@ -11,6 +11,8 @@ function reply(array $data): void {
     exit;
 }
 
+if (SECRET === '') reply(['ok' => false, 'error' => 'server']);
+
 $input = json_decode(file_get_contents('php://input'), true);
 $payload = is_array($input) ? (string)($input['p'] ?? '') : '';
 $signature = is_array($input) ? (string)($input['s'] ?? '') : '';
@@ -29,18 +31,21 @@ if ($action !== 'contact') reply(['ok' => false, 'error' => 'invalid']);
 // One email per offer, however many times the button is clicked.
 $dir = __DIR__ . '/sent';
 if (!is_dir($dir)) {
-    mkdir($dir, 0750);
+    if (!@mkdir($dir, 0750)) reply(['ok' => false, 'error' => 'server']);
     file_put_contents($dir . '/.htaccess', "Require all denied\n");
 }
 $marker = $dir . '/' . preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$offer['id']) . '.json';
 $handle = @fopen($marker, 'x');
-if ($handle === false) reply(['ok' => true]);
+if ($handle === false) reply(file_exists($marker) ? ['ok' => true] : ['ok' => false, 'error' => 'server']);
 fwrite($handle, gmdate('c'));
 fclose($handle);
 
 $who = preg_replace('/[\r\n]+/', ' ', (string)($offer['company'] ?: $offer['name'] ?: 'Klient'));
 $lines = ["$who chce porozmawiać o ofercie.", '', 'Osoba: ' . ($offer['name'] ?? ''), 'Data oferty: ' . ($offer['date'] ?? ''), 'Oferta ważna do: ' . $offer['exp']];
 $subject = '=?UTF-8?B?' . base64_encode("$who chce porozmawiać o ofercie") . '?=';
-$headers = "From: " . MAIL_TO . "\r\nContent-Type: text/plain; charset=UTF-8";
-mail(MAIL_TO, $subject, implode("\n", $lines), $headers);
+$headers = "From: " . MAIL_TO . "\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8";
+if (!mail(MAIL_TO, $subject, implode("\n", $lines), $headers)) {
+    unlink($marker);
+    reply(['ok' => false, 'error' => 'server']);
+}
 reply(['ok' => true]);

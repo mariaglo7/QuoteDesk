@@ -61,11 +61,15 @@ const validDate = (v) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
 
 function parseItem(raw, settings, lang) {
   const service = settings.priceList.find((p) => p.id === raw?.serviceId);
-  const qty = Number.isInteger(raw?.qty) && raw.qty > 0 ? raw.qty : 1;
+  const given = raw?.qty ?? null;
+  const parsed = Number(given);
+  const validQty = Number.isInteger(parsed) && parsed > 0;
+  const qty = given !== null && validQty ? parsed : 1;
+  const flag = given !== null && !validQty ? { needsCheck: true } : {};
   const sourceQuote = typeof raw?.sourceQuote === 'string' ? raw.sourceQuote : null;
-  if (service) return { ...itemFromService(service, lang, qty), sourceQuote };
+  if (service) return { ...itemFromService(service, lang, qty), sourceQuote, ...flag };
   const name = typeof raw?.name === 'string' && raw.name ? raw.name : sourceQuote ?? '';
-  return emptyItem({ name, qty, sourceQuote });
+  return emptyItem({ name, qty, sourceQuote, ...flag });
 }
 
 function parseSection(raw, settings, lang) {
@@ -169,11 +173,17 @@ const TONES = {
   warmer: 'Make it noticeably warmer and more personal, still concise.',
 };
 
+/** The signed link never passes through Claude: one wrong character would break it. */
+export function insertLink(text, url) {
+  if (!url) return text.replaceAll('{{LINK}}', '').trim();
+  return text.includes('{{LINK}}') ? text.replaceAll('{{LINK}}', url) : `${text}\n\n${url}`;
+}
+
 function offerFacts({ quote, totals, settings, offerUrl }) {
   return `Client: ${quote.client.name || 'unknown'}, ${quote.client.company || 'no company'}
 Prices, never change them and never add new ones:
 ${offerLines(quote, totals).join('\n')}
-Online offer link: ${offerUrl || '(not available, leave it out)'}
+Online offer link: ${offerUrl ? 'write exactly {{LINK}} where the link belongs' : '(not available, leave it out)'}
 Signature, use exactly:
 ${settings.signature}`;
 }

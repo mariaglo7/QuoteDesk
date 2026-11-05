@@ -10,14 +10,16 @@ export const LOGOS = { dark: read('assets/logo-dark.txt'), white: read('assets/l
 /** jsPDF that records every text call, because embedded fonts are not searchable in the output. */
 export function recordingPdf() {
   const texts = [];
+  const calls = [];
   function RecordingPdf(options) {
     const doc = new jsPDF(options);
     const original = doc.text;
     doc.text = function text(value, ...rest) {
       texts.push(...[value].flat());
+      calls.push({ value, x: rest[0], y: rest[1], page: doc.getNumberOfPages(), width: [value].flat().reduce((w, line) => Math.max(w, doc.getTextWidth(line)), 0), align: rest[2]?.align });
       return original.call(doc, value, ...rest);
     };
     return doc;
   }
-  return { RecordingPdf, texts };
+  return { RecordingPdf, texts, calls };
 }

@@ -1,7 +1,7 @@
 // Code written with help from Claude (Anthropic)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildExtractPrompt, parseExtraction, buildCopyPrompt, parseCopy, buildMessagePrompt, buildFollowUpPrompt } from '../web/src/claude.js';
+import { buildExtractPrompt, parseExtraction, buildCopyPrompt, parseCopy, buildMessagePrompt, buildFollowUpPrompt, insertLink } from '../web/src/claude.js';
 import { calcQuote } from '../web/src/pricing.js';
 import { DEFAULT_SETTINGS as S } from '../web/src/defaults.js';
 import { REFERENCE } from './fixtures/reference.js';
@@ -42,12 +42,25 @@ test('unknown serviceId becomes null with sourceQuote kept', () => {
   assert.equal(item.sourceQuote, 'chcę neon');
 });
 
-for (const qty of ['dwa', 0, -3, null]) {
-  test(`qty ${qty} becomes 1`, () => {
+for (const qty of ['dwa', 0, -3]) {
+  test(`qty ${qty} is flagged for checking`, () => {
     const e = parseExtraction(raw({ sections: [{ type: 'services', items: [svc('post', { qty })] }] }), S, TODAY);
     assert.equal(e.sections[0].items[0].qty, 1);
+    assert.equal(e.sections[0].items[0].needsCheck, true);
   });
 }
+
+test('numeric string qty is used', () => {
+  const e = parseExtraction(raw({ sections: [{ type: 'services', items: [svc('post', { qty: '8' })] }] }), S, TODAY);
+  assert.equal(e.sections[0].items[0].qty, 8);
+  assert.ok(!e.sections[0].items[0].needsCheck);
+});
+
+test('missing qty means 1 without a flag', () => {
+  const e = parseExtraction(raw({ sections: [{ type: 'services', items: [svc('post', { qty: null })] }] }), S, TODAY);
+  assert.equal(e.sections[0].items[0].qty, 1);
+  assert.ok(!e.sections[0].items[0].needsCheck);
+});
 
 test('invalid lang defaults to en', () => {
   assert.equal(parseExtraction(raw({ lang: 'de' }), S, TODAY).lang, 'en');
@@ -116,7 +129,8 @@ test('message prompt has everything Maria requires', () => {
   const totals = calcQuote(REFERENCE, S);
   const p = buildMessagePrompt({ quote: { ...REFERENCE, missing: ['czy ma domenę?'] }, totals, settings: S, offerUrl: 'https://x.test/#a.b', tone: 'default' });
   assert.ok(p.includes('£380'));
-  assert.ok(p.includes('https://x.test/#a.b'));
+  assert.ok(p.includes('{{LINK}}'));
+  assert.ok(!p.includes('https://x.test/#a.b'));
   assert.ok(p.includes('info@designbymaria.co.uk'));
   assert.ok(p.includes('czy ma domenę?'));
   assert.match(p, /2 (revision )?rounds/);
@@ -133,6 +147,18 @@ test('tone changes the prompt', () => {
 
 test('follow up prompt is polite and has the link', () => {
   const p = buildFollowUpPrompt({ quote: REFERENCE, totals: calcQuote(REFERENCE, S), settings: S, offerUrl: 'https://x.test/' });
-  assert.ok(p.includes('https://x.test/'));
+  assert.ok(p.includes('{{LINK}}'));
   assert.match(p, /polite/i);
+});
+
+test('insertLink swaps the placeholder in code', () => {
+  assert.equal(insertLink('Oferta: {{LINK}}\nMaria', 'https://x.test/#a.b'), 'Oferta: https://x.test/#a.b\nMaria');
+});
+
+test('insertLink appends the link when Claude dropped the placeholder', () => {
+  assert.ok(insertLink('Oferta', 'https://x.test/').endsWith('https://x.test/'));
+});
+
+test('insertLink removes the placeholder without a link', () => {
+  assert.ok(!insertLink('Oferta: {{LINK}}', '').includes('{{LINK}}'));
 });

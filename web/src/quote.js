@@ -24,11 +24,14 @@ export function emptyItem(extra = {}) {
 
 export function itemFromService(service, lang, qty = 1) {
   const en = lang === 'en';
+  const pick = (english, polish) => (en ? english || polish : polish || english);
+  const bullets = en ? service.bulletsEn : service.bulletsPl;
+  const otherBullets = en ? service.bulletsPl : service.bulletsEn;
   return emptyItem({
     serviceId: service.id,
-    name: en ? service.nameEn : service.namePl,
-    description: (en ? service.descEn : service.descPl) ?? '',
-    bullets: [...((en ? service.bulletsEn : service.bulletsPl) ?? [])],
+    name: pick(service.nameEn, service.namePl),
+    description: pick(service.descEn, service.descPl) ?? '',
+    bullets: [...(bullets?.length ? bullets : otherBullets ?? [])],
     qty,
   });
 }

@@ -37,7 +37,7 @@ function itemEditor(section, item, quote, onChange, redraw) {
   return h('div', { class: 'item', 'data-item': item.id },
     h('div', { class: 'row' },
       h('div', { class: 'grow' }, field(t('Nazwa'), textInput(item, 'name', onChange))),
-      field(t('Ilość'), numberInput(item, 'qty', onChange, { min: '1', step: '1', style: 'width:70px' })),
+      field(t('Ilość'), numberInput(item, 'qty', () => { delete item.needsCheck; onChange(); }, { min: '1', step: '1', style: 'width:70px' })),
       field(t('Cena ręczna (£)'), numberInput(item, 'unitPriceOverride', onChange, { style: 'width:110px' })),
     ),
     h('div', { class: 'row small' },
@@ -46,6 +46,7 @@ function itemEditor(section, item, quote, onChange, redraw) {
       h('label', { class: 'c' }, h('input', { type: 'checkbox', checked: Boolean(item.priceFrom), onChange: (e) => { item.priceFrom = e.target.checked; onChange(); } }), t('Cena „od”')),
       h('button', { class: 'btn small', style: 'margin-left:auto', onClick: () => { section.items.splice(section.items.indexOf(item), 1); redraw(); } }, t('Usuń')),
     ),
+    item.needsCheck ? h('p', { class: 'small muted' }, t('Sprawdź ilość, Claude jej nie odczytał.')) : '',
     item.sourceQuote ? h('p', { class: 'small muted' }, t('Z wiadomości: „{v}”', { v: item.sourceQuote })) : '',
     isOption
       ? [field(t('Podtytuł'), textInput(item, 'subtitle', onChange)), field(t('Punkty, jeden w linii'), linesArea(item, 'bullets', onChange))]

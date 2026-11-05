@@ -3,7 +3,7 @@ import { t, uiLang } from '../i18n.js';
 import { h, copyText, claudeErrorText } from './dom.js';
 import { calcQuote } from '../pricing.js';
 import { effectiveStatus, isFollowUpDue } from '../status.js';
-import { buildFollowUpPrompt } from '../claude.js';
+import { buildFollowUpPrompt, insertLink } from '../claude.js';
 import { fallbackFollowUp } from '../templates.js';
 import { formatMoney, stripDashes } from '../text.js';
 
@@ -30,7 +30,7 @@ function followUpBox(quote, totals, ctx) {
   area.value = fallbackFollowUp(args);
   if (ctx.sample) {
     area.value = t('Claude pisze follow up…');
-    ctx.sample(buildFollowUpPrompt(args)).then(({ text }) => { area.value = stripDashes(text); }).catch((e) => {
+    ctx.sample(buildFollowUpPrompt(args), { cache: false }).then(({ text }) => { area.value = insertLink(stripDashes(text), ''); }).catch((e) => {
       ctx.toast(claudeErrorText(e));
       area.value = fallbackFollowUp(args);
     });

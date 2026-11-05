@@ -33,7 +33,8 @@ async function boot() {
     main,
   );
 
-  const ctx = { store, settings, sample, downloads, toast, navigate, refreshBanners };
+  const ctx = { store, settings, sample, downloads, toast, navigate, refreshBanners, leave: null, navToken: 0, inboxDraft: '' };
+  window.addEventListener('pagehide', () => { ctx.leave?.(); });
 
   function refreshBanners() {
     const paidServices = settings.priceList.filter((p) => !['post', 'care'].includes(p.id)).length;
@@ -52,7 +53,10 @@ async function boot() {
     navigate(current.view, current.quote);
   }
 
-  function navigate(view, quote = null) {
+  async function navigate(view, quote = null) {
+    await ctx.leave?.();
+    ctx.leave = null;
+    ctx.navToken += 1;
     current = { view, quote };
     nav.replaceChildren(
       ...VIEWS.map(([id, label]) => h('button', { class: id === view ? 'on' : '', onClick: () => navigate(id) }, t(label))),

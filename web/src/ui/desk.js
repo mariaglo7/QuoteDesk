@@ -3,9 +3,9 @@ import { t, uiLang } from '../i18n.js';
 import { h, field, textInput, textArea, copyText, debounce, claudeErrorText } from './dom.js';
 import { renderSections, paintPrices } from './sections.js';
 import { loadPdfAssets, loadPdfViewer } from './pdfAssets.js';
-import { calcQuote } from '../pricing.js';
+import { calcQuote, freezePrices } from '../pricing.js';
 import { renderOfferPdf } from '../pdf/render.js';
-import { buildCopyPrompt, parseCopy, buildMessagePrompt } from '../claude.js';
+import { buildCopyPrompt, parseCopy, buildMessagePrompt, insertLink } from '../claude.js';
 import { fallbackMessage } from '../templates.js';
 import { makeOfferPayload, encodeOffer, signPayload, buildOfferUrl } from '../offerLink.js';
 import { formatMoney, offerFileName, stripDashes, toISODate } from '../text.js';
@@ -39,6 +39,9 @@ export function renderDesk(root, ctx, quote) {
   const { settings, store, sample, downloads, toast, navigate } = ctx;
   let tab = 'message';
   let totals = calcQuote(quote, settings);
+  let ready = false;
+  let alive = true;
+  const lastReport = {};
 
   const summary = h('div', { class: 'summary' });
   const sectionsRoot = h('div', { class: 'stack' });
@@ -47,8 +50,13 @@ export function renderDesk(root, ctx, quote) {
   const tabBody = h('div', { class: 'stack' });
 
   const persist = debounce(() => store.saveQuote(quote).catch(() => toast(t('Nie udało się zapisać oferty.'))), 800);
+  ctx.leave = () => {
+    alive = false;
+    return persist.flush();
+  };
   const refreshPreview = debounce(() => { if (tab === 'pdf') drawTab(); }, 800);
 
+  const offerDay = () => quote.sentAt?.slice(0, 10) ?? today();
   const blocked = () => totals.needsPrice || quote.sections.length === 0;
 
   function paintSummary() {
@@ -64,8 +72,28 @@ export function renderDesk(root, ctx, quote) {
     paintPrices(sectionsRoot, totals, quote.lang);
     paintSummary();
     drawLockNote();
+    side.querySelectorAll('.gated').forEach((b) => { b.disabled = blocked(); });
+    if (!ready) return;
+    if (quote.message) quote.messageStale = true;
+    paintStale();
+    refreshLink();
     persist();
     refreshPreview();
+  }
+
+  function paintStale() {
+    side.querySelector('.stale')?.replaceChildren(quote.message && quote.messageStale ? t('Oferta się zmieniła. Napisz wiadomość ponownie.') : '');
+  }
+
+  function refreshLink() {
+    const input = side.querySelector('.offer-link');
+    if (!input) return;
+    const button = side.querySelector('.copy-link');
+    button.disabled = true;
+    offerUrl().then((url) => {
+      input.value = url;
+      button.disabled = blocked();
+    });
   }
 
   function redrawSections() {
@@ -75,7 +103,7 @@ export function renderDesk(root, ctx, quote) {
 
   async function offerUrl() {
     if (!settings.linkSecret || totals.needsPrice) return '';
-    const encoded = await encodeOffer(makeOfferPayload(quote, totals, settings, today()));
+    const encoded = await encodeOffer(makeOfferPayload(quote, totals, settings, offerDay()));
     return buildOfferUrl(settings.offerBaseUrl, encoded, await signPayload(encoded, settings.linkSecret));
   }
 
@@ -83,7 +111,7 @@ export function renderDesk(root, ctx, quote) {
     const { fonts, logos } = await loadPdfAssets();
     return renderOfferPdf({
       jsPDF: window.jspdf.jsPDF, fonts, logos, coverImage: await store.coverDataUrl(quote.coverAssetId),
-      quote, totals, settings, offerUrl: await offerUrl(), today: today(),
+      quote, totals, settings, offerUrl: await offerUrl(), today: offerDay(), report: lastReport,
     });
   }
 
@@ -91,15 +119,20 @@ export function renderDesk(root, ctx, quote) {
     if (!sample) return;
     if (button) button.disabled = true;
     copyNote.textContent = t('Claude pisze teksty oferty…');
+    form.inert = true;
     try {
-      const updated = parseCopy(await sample.json(buildCopyPrompt({ quote })), quote);
+      const raw = await sample.json(buildCopyPrompt({ quote }), { cache: false });
+      if (!alive) return;
+      const updated = parseCopy(raw, quote);
       quote.needs = updated.needs;
       quote.sections = updated.sections;
       copyNote.textContent = '';
       drawForm();
+      persist();
     } catch (e) {
       copyNote.textContent = claudeErrorText(e);
     }
+    form.inert = false;
     if (button) button.disabled = false;
   }
 
@@ -111,10 +144,12 @@ export function renderDesk(root, ctx, quote) {
       button.disabled = true;
       area.value = t('Claude pisze wiadomość…');
       try {
-        const { text } = await sample(buildMessagePrompt({ quote, totals, settings, offerUrl: url, tone }), {
+        const { text, truncated } = await sample(buildMessagePrompt({ quote, totals, settings, offerUrl: url, tone }), {
+          cache: false,
           onText: ({ text: partial }) => { area.value = partial; },
         });
-        quote.message = stripDashes(text);
+        quote.message = insertLink(stripDashes(text), url);
+        if (truncated) toast(t('Wiadomość została ucięta, napisz ją ponownie.'));
       } catch (e) {
         toast(claudeErrorText(e));
         quote.message = fallbackMessage({ quote, totals, settings, offerUrl: url });
@@ -122,6 +157,8 @@ export function renderDesk(root, ctx, quote) {
       button.disabled = false;
     }
     area.value = quote.message;
+    quote.messageStale = false;
+    paintStale();
     persist();
   }
 
@@ -130,16 +167,18 @@ export function renderDesk(root, ctx, quote) {
     const write = (tone) => (e) => writeMessage(tone, area, e.currentTarget);
     return [
       h('div', { class: 'row' },
-        h('button', { class: 'btn primary', disabled: blocked(), onClick: write('default') }, quote.message ? t('Napisz ponownie') : t('Napisz wiadomość')),
-        h('button', { class: 'btn', disabled: blocked(), onClick: write('shorter') }, t('Krócej')),
-        h('button', { class: 'btn', disabled: blocked(), onClick: write('warmer') }, t('Cieplej')),
+        h('button', { class: 'btn primary gated', disabled: blocked(), onClick: write('default') }, quote.message ? t('Napisz ponownie') : t('Napisz wiadomość')),
+        h('button', { class: 'btn gated', disabled: blocked(), onClick: write('shorter') }, t('Krócej')),
+        h('button', { class: 'btn gated', disabled: blocked(), onClick: write('warmer') }, t('Cieplej')),
         h('button', { class: 'btn', onClick: () => copyText(area.value, area, toast) }, t('Kopiuj')),
       ),
+      h('p', { class: 'small error stale' }, quote.message && quote.messageStale ? t('Oferta się zmieniła. Napisz wiadomość ponownie.') : ''),
       area,
     ];
   }
 
   function pdfTab() {
+    const warning = h('p', { class: 'small error' });
     const pages = h('div', { class: 'pdf-pages' }, h('p', { class: 'small muted' }, t('Przygotowuję podgląd…')));
     const download = async () => {
       try {
@@ -158,6 +197,7 @@ export function renderDesk(root, ctx, quote) {
       }
       try {
         const [doc, pdfjs] = await Promise.all([buildPdf(), loadPdfViewer()]);
+        if (lastReport.overflow.length) warning.textContent = t('Część tekstu nie zmieściła się w PDF. Skróć: {v}', { v: lastReport.overflow.join(', ') });
         const pdf = await pdfjs.getDocument({ data: new Uint8Array(doc.output('arraybuffer')) }).promise;
         const canvases = [];
         for (let n = 1; n <= pdf.numPages; n += 1) {
@@ -172,17 +212,17 @@ export function renderDesk(root, ctx, quote) {
         pages.replaceChildren(h('p', { class: 'small muted' }, t('Podgląd jest niedostępny, ale PDF możesz pobrać.')));
       }
     })();
-    return [h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: blocked(), onClick: download }, t('Pobierz PDF'))), pages];
+    return [h('div', { class: 'row' }, h('button', { class: 'btn primary gated', disabled: blocked(), onClick: download }, t('Pobierz PDF'))), warning, pages];
   }
 
   function linkTab() {
     if (!settings.linkSecret) return [h('p', {}, t('Brakuje klucza do linków. Uzupełnij go w Ustawieniach.'))];
-    const input = h('input', { readOnly: true, 'aria-label': t('Link do oferty') });
+    const input = h('input', { class: 'offer-link', readOnly: true, 'aria-label': t('Link do oferty') });
     offerUrl().then((url) => { input.value = url; });
     return [
       h('p', { class: 'small muted' }, t('Klient zobaczy skrót oferty i przycisk „Chcę rozmawiać”. Pełne opisy są w PDF.')),
       input,
-      h('div', {}, h('button', { class: 'btn primary', disabled: blocked(), onClick: () => copyText(input.value, input, toast) }, t('Kopiuj link do oferty'))),
+      h('div', {}, h('button', { class: 'btn primary gated copy-link', disabled: blocked(), onClick: () => copyText(input.value, input, toast) }, t('Kopiuj link do oferty'))),
     ];
   }
 
@@ -204,7 +244,17 @@ export function renderDesk(root, ctx, quote) {
       h('div', { class: 'row' },
         h('button', {
           class: 'btn', disabled: quote.status !== 'draft',
-          onClick: () => { quote.status = 'sent'; quote.sentAt = new Date().toISOString(); store.saveQuote(quote).catch(() => toast(t('Nie udało się zapisać oferty.'))); toast(t('Oznaczono jako wysłaną')); drawSide(); },
+          onClick: () => {
+            quote.sections = freezePrices(quote, totals);
+            quote.status = 'sent';
+            quote.sentAt = new Date().toISOString();
+            store.saveQuote(quote).catch(() => toast(t('Nie udało się zapisać oferty.')));
+            toast(t('Oznaczono jako wysłaną'));
+            const stale = quote.messageStale;
+            drawForm();
+            quote.messageStale = stale;
+            drawSide();
+          },
         }, quote.status === 'draft' ? t('Oznacz jako wysłaną') : t('Wysłana')),
         h('button', { class: 'btn link', onClick: () => navigate('quotes') }, t('Wszystkie oferty')),
       ),
@@ -296,6 +346,7 @@ export function renderDesk(root, ctx, quote) {
   ));
   drawForm();
   drawSide();
+  ready = true;
   if (ctx.autoCopy) {
     ctx.autoCopy = false;
     writeCopy();
