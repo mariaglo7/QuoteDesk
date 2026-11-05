@@ -1,4 +1,5 @@
 // Code written with help from Claude (Anthropic)
+import { t } from '../i18n.js';
 
 export function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);
@@ -50,10 +51,10 @@ export function linesArea(obj, key, onChange, props = {}) {
 export async function copyText(text, target, toast) {
   try {
     await navigator.clipboard.writeText(text);
-    toast('Skopiowano');
+    toast(t('Skopiowano'));
   } catch {
     target?.select?.();
-    toast('Zaznaczono tekst, skopiuj go ręcznie');
+    toast(t('Zaznaczono tekst, skopiuj go ręcznie'));
   }
 }
 
@@ -66,7 +67,7 @@ export function debounce(fn, ms) {
 }
 
 export function claudeErrorText(e) {
-  if (e?.code === 'rate_limited') return 'Spróbuj za chwilę.';
-  if (e?.code === 'not_granted') return 'Claude niedostępny, uzupełnij ofertę ręcznie.';
-  return 'Claude nie odpowiedział. Spróbuj ponownie albo uzupełnij ręcznie.';
+  if (e?.code === 'rate_limited') return t('Spróbuj za chwilę.');
+  if (e?.code === 'not_granted') return t('Claude niedostępny, uzupełnij ofertę ręcznie.');
+  return t('Claude nie odpowiedział. Spróbuj ponownie albo uzupełnij ręcznie.');
 }

@@ -1,4 +1,5 @@
 // Code written with help from Claude (Anthropic)
+import { t } from '../i18n.js';
 import { h, claudeErrorText } from './dom.js';
 import { buildExtractPrompt, parseExtraction } from '../claude.js';
 import { newId, newQuote } from '../quote.js';
@@ -19,13 +20,13 @@ function quoteFromExtraction(extraction, message) {
 
 export function renderInbox(root, ctx) {
   const { sample, settings, navigate } = ctx;
-  const box = h('textarea', { id: 'client-message', rows: 10, placeholder: 'Hej! Otwieram piekarnię w Aberdeen i potrzebuję logo i prostej strony…' });
+  const box = h('textarea', { id: 'client-message', rows: 10, placeholder: t('Hej! Otwieram piekarnię w Aberdeen i potrzebuję logo i prostej strony…') });
   const error = h('p', { class: 'error', role: 'alert' });
 
   async function read(button) {
     const message = box.value.trim();
     if (!message) {
-      error.textContent = 'Wklej najpierw wiadomość od klienta.';
+      error.textContent = t('Wklej najpierw wiadomość od klienta.');
       return;
     }
     if (!sample) {
@@ -33,7 +34,7 @@ export function renderInbox(root, ctx) {
       return;
     }
     button.disabled = true;
-    button.textContent = 'Czytam wiadomość…';
+    button.textContent = t('Czytam wiadomość…');
     error.textContent = '';
     try {
       const raw = await sample.json(buildExtractPrompt(message, settings, toISODate(new Date())));
@@ -44,7 +45,7 @@ export function renderInbox(root, ctx) {
       if (e?.code === 'rate_limited') {
         error.textContent = claudeErrorText(e);
         button.disabled = false;
-        button.textContent = 'Przeczytaj';
+        button.textContent = t('Przeczytaj');
         return;
       }
       ctx.toast(claudeErrorText(e));
@@ -52,13 +53,13 @@ export function renderInbox(root, ctx) {
     }
   }
 
-  const readButton = h('button', { class: 'btn primary', onClick: (e) => read(e.currentTarget) }, 'Przeczytaj');
+  const readButton = h('button', { class: 'btn primary', onClick: (e) => read(e.currentTarget) }, t('Przeczytaj'));
   root.append(h('div', { class: 'page narrow' },
-    h('h1', {}, 'Wklej wiadomość od klienta'),
-    h('p', { class: 'muted' }, 'Mail, DM z Instagrama albo notatka z rozmowy. Claude rozpozna, czego klient potrzebuje, a Ty sprawdzisz ceny.'),
+    h('h1', {}, t('Wklej wiadomość od klienta')),
+    h('p', { class: 'muted' }, t('Mail, DM z Instagrama albo notatka z rozmowy. Claude rozpozna, czego klient potrzebuje, a Ty sprawdzisz ceny.')),
     box,
     error,
-    h('div', { class: 'row' }, readButton, h('button', { class: 'btn', onClick: () => navigate('desk', newQuote()) }, 'Zacznij od zera')),
-    sample ? '' : h('p', { class: 'small muted' }, 'Claude jest dostępny po otwarciu aplikacji na claude.ai. Tutaj uzupełnisz ofertę ręcznie.'),
+    h('div', { class: 'row' }, readButton, h('button', { class: 'btn', onClick: () => navigate('desk', newQuote()) }, t('Zacznij od zera'))),
+    sample ? '' : h('p', { class: 'small muted' }, t('Claude jest dostępny po otwarciu aplikacji na claude.ai. Tutaj uzupełnisz ofertę ręcznie.')),
   ));
 }

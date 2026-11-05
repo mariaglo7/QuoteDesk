@@ -1,4 +1,4 @@
-# Wyceny Design by Maria Implementation Plan
+# QuoteDesk Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (Maria chose Native) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,7 +14,7 @@
 ## Global Constraints
 
 - University project (RGU): every code file (JS, PHP, CSS, HTML, tests) starts with the comment `Code written with help from Claude (Anthropic)` in that language's comment syntax.
-- UI copy in Polish; code, identifiers and code comments in English.
+- UI copy in Polish and English through `web/src/i18n.js` (switch in the top bar); code, identifiers and code comments in English.
 - No em dash, en dash or spaced hyphen in any generated or UI text (`stripDashes` applied to every Claude output).
 - Font: Poppins only (no Caveat). Colours: brown `#1E1613`, pink `#FF7AE5`, PDF background pure white.
 - Money in whole pounds, displayed as `£1,110` (en-GB grouping), always with the £ sign.
@@ -304,7 +304,7 @@ test('no bank details', ...);
 - Router in `app.js`: views `inbox`, `desk`, `quotes`, `settings`; banner "Zapis tylko na tym urządzeniu" in local mode; empty price list banner linking to Settings.
 
 - [ ] **Step 1:** Read `db.d.ts`, `user.d.ts`, `sample.d.ts`, `downloads.d.ts`, `assets.d.ts` in `/private/tmp/claude-501/bundled-skills/2.1.299/636500f95faf8264e486df4b498ba859/artifact-capabilities/0.2.89/` (if the path is gone, reload the `artifact-capabilities` skill) and follow them exactly.
-- [ ] **Step 2: Implement** `index.html` (`<title>Wyceny Design by Maria</title>`, Poppins from Google Fonts, `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`, module entry), `styles.css` (tokens with light and dark blocks per the artifact contract, 16px safe area gutters, two columns from 860px, tabs below), `store.js`, `app.js`, `settings.js` (price list rows with descriptions and bullets, multipliers, rush, extra round, bundle discount, terms, info cards, Hostinger guide, signature, offer base URL, link secret with Copy).
+- [ ] **Step 2: Implement** `index.html` (`<title>QuoteDesk</title>`, Poppins from Google Fonts, `https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js`, module entry), `styles.css` (tokens with light and dark blocks per the artifact contract, 16px safe area gutters, two columns from 860px, tabs below), `store.js`, `app.js`, `settings.js` (price list rows with descriptions and bullets, multipliers, rush, extra round, bundle discount, terms, info cards, Hostinger guide, signature, offer base URL, link secret with Copy).
 - [ ] **Step 3: Verify** by serving `web/` locally in the browser pane: local mode banner, add a price list item, reload, it persists. Check 375px and 1280px.
 - [ ] **Step 4:** Commit `feat: app shell, store and settings`.
 

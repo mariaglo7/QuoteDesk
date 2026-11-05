@@ -1,4 +1,4 @@
-# Wyceny Design by Maria: specyfikacja
+# QuoteDesk: specyfikacja
 
 Data: 22.10.2026, aktualizacja 05.11.2026 (PDF w stylu oferty Harbour Light Co)
 Status: do akceptacji przez Marię
@@ -27,6 +27,8 @@ Aplikacja ma maksymalnie skrócić drogę od zapytania klienta do rozmowy o zlec
 * Link: skrócona oferta na designbymaria.co.uk (Hostinger) z przyciskiem „Chcę rozmawiać”. Bez wyboru wariantu i bez zaliczki w linku.
 * Oferta ważna 7 dni.
 * Font: tylko Poppins. Bez Caveat.
+* Nazwa aplikacji: QuoteDesk. Folder: `Desktop/RGU/QuoteDesk`.
+* Interfejs w dwóch językach, polskim i angielskim, z przełącznikiem PL/EN w górnym pasku.
 * Projekt na studia (RGU): komentarz o pomocy Claude na górze każdego pliku z kodem.
 
 ## 3. Cennik i zasady liczenia

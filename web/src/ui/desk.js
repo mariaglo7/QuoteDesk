@@ -1,4 +1,5 @@
 // Code written with help from Claude (Anthropic)
+import { t, uiLang } from '../i18n.js';
 import { h, field, textInput, textArea, copyText, debounce, claudeErrorText } from './dom.js';
 import { renderSections, paintPrices } from './sections.js';
 import { loadPdfAssets, loadPdfViewer } from './pdfAssets.js';
@@ -45,16 +46,16 @@ export function renderDesk(root, ctx, quote) {
   const side = h('div', { class: 'stack' });
   const tabBody = h('div', { class: 'stack' });
 
-  const persist = debounce(() => store.saveQuote(quote).catch(() => toast('Nie udało się zapisać oferty.')), 800);
+  const persist = debounce(() => store.saveQuote(quote).catch(() => toast(t('Nie udało się zapisać oferty.'))), 800);
   const refreshPreview = debounce(() => { if (tab === 'pdf') drawTab(); }, 800);
 
   const blocked = () => totals.needsPrice || quote.sections.length === 0;
 
   function paintSummary() {
     summary.replaceChildren(
-      h('span', {}, 'Wartość orientacyjna: ', h('b', {}, formatMoney(totals.estimate.oneOff))),
+      h('span', {}, t('Wartość orientacyjna: '), h('b', {}, formatMoney(totals.estimate.oneOff))),
       totals.estimate.monthly ? h('span', {}, h('b', {}, `${formatMoney(totals.estimate.monthly)}/mies.`)) : '',
-      totals.needsPrice ? h('span', { class: 'pill warn' }, 'Uzupełnij ceny „Do sprawdzenia”') : '',
+      totals.needsPrice ? h('span', { class: 'pill warn' }, t('Uzupełnij ceny „Do sprawdzenia”')) : '',
     );
   }
 
@@ -89,7 +90,7 @@ export function renderDesk(root, ctx, quote) {
   async function writeCopy(button) {
     if (!sample) return;
     if (button) button.disabled = true;
-    copyNote.textContent = 'Claude pisze teksty oferty…';
+    copyNote.textContent = t('Claude pisze teksty oferty…');
     try {
       const updated = parseCopy(await sample.json(buildCopyPrompt({ quote })), quote);
       quote.needs = updated.needs;
@@ -108,7 +109,7 @@ export function renderDesk(root, ctx, quote) {
       quote.message = fallbackMessage({ quote, totals, settings, offerUrl: url });
     } else {
       button.disabled = true;
-      area.value = 'Claude pisze wiadomość…';
+      area.value = t('Claude pisze wiadomość…');
       try {
         const { text } = await sample(buildMessagePrompt({ quote, totals, settings, offerUrl: url, tone }), {
           onText: ({ text: partial }) => { area.value = partial; },
@@ -125,21 +126,21 @@ export function renderDesk(root, ctx, quote) {
   }
 
   function messageTab() {
-    const area = textArea(quote, 'message', persist, { class: 'message', 'aria-label': 'Wiadomość do klienta', placeholder: 'Tu pojawi się wiadomość do klienta.' });
+    const area = textArea(quote, 'message', persist, { class: 'message', 'aria-label': t('Wiadomość do klienta'), placeholder: t('Tu pojawi się wiadomość do klienta.') });
     const write = (tone) => (e) => writeMessage(tone, area, e.currentTarget);
     return [
       h('div', { class: 'row' },
-        h('button', { class: 'btn primary', disabled: blocked(), onClick: write('default') }, quote.message ? 'Napisz ponownie' : 'Napisz wiadomość'),
-        h('button', { class: 'btn', disabled: blocked(), onClick: write('shorter') }, 'Krócej'),
-        h('button', { class: 'btn', disabled: blocked(), onClick: write('warmer') }, 'Cieplej'),
-        h('button', { class: 'btn', onClick: () => copyText(area.value, area, toast) }, 'Kopiuj'),
+        h('button', { class: 'btn primary', disabled: blocked(), onClick: write('default') }, quote.message ? t('Napisz ponownie') : t('Napisz wiadomość')),
+        h('button', { class: 'btn', disabled: blocked(), onClick: write('shorter') }, t('Krócej')),
+        h('button', { class: 'btn', disabled: blocked(), onClick: write('warmer') }, t('Cieplej')),
+        h('button', { class: 'btn', onClick: () => copyText(area.value, area, toast) }, t('Kopiuj')),
       ),
       area,
     ];
   }
 
   function pdfTab() {
-    const pages = h('div', { class: 'pdf-pages' }, h('p', { class: 'small muted' }, 'Przygotowuję podgląd…'));
+    const pages = h('div', { class: 'pdf-pages' }, h('p', { class: 'small muted' }, t('Przygotowuję podgląd…')));
     const download = async () => {
       try {
         const doc = await buildPdf();
@@ -147,12 +148,12 @@ export function renderDesk(root, ctx, quote) {
         if (downloads) await downloads.save({ filename, data: doc.output('arraybuffer') });
         else doc.save(filename);
       } catch (e) {
-        if (e?.code !== 'cancelled') toast('Nie udało się zapisać PDF.');
+        if (e?.code !== 'cancelled') toast(t('Nie udało się zapisać PDF.'));
       }
     };
     (async () => {
       if (blocked()) {
-        pages.replaceChildren(h('p', { class: 'small muted' }, 'Podgląd pojawi się, gdy oferta będzie mieć sekcje i ceny.'));
+        pages.replaceChildren(h('p', { class: 'small muted' }, t('Podgląd pojawi się, gdy oferta będzie mieć sekcje i ceny.')));
         return;
       }
       try {
@@ -162,26 +163,26 @@ export function renderDesk(root, ctx, quote) {
         for (let n = 1; n <= pdf.numPages; n += 1) {
           const page = await pdf.getPage(n);
           const viewport = page.getViewport({ scale: 1.5 });
-          const canvas = h('canvas', { width: viewport.width, height: viewport.height, 'aria-label': `Strona ${n}` });
+          const canvas = h('canvas', { width: viewport.width, height: viewport.height, 'aria-label': t('Strona {n}', { n }) });
           await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
           canvases.push(canvas);
         }
         pages.replaceChildren(...canvases);
       } catch {
-        pages.replaceChildren(h('p', { class: 'small muted' }, 'Podgląd jest niedostępny, ale PDF możesz pobrać.'));
+        pages.replaceChildren(h('p', { class: 'small muted' }, t('Podgląd jest niedostępny, ale PDF możesz pobrać.')));
       }
     })();
-    return [h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: blocked(), onClick: download }, 'Pobierz PDF')), pages];
+    return [h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: blocked(), onClick: download }, t('Pobierz PDF'))), pages];
   }
 
   function linkTab() {
-    if (!settings.linkSecret) return [h('p', {}, 'Brakuje klucza do linków. Uzupełnij go w Ustawieniach.')];
-    const input = h('input', { readOnly: true, 'aria-label': 'Link do oferty' });
+    if (!settings.linkSecret) return [h('p', {}, t('Brakuje klucza do linków. Uzupełnij go w Ustawieniach.'))];
+    const input = h('input', { readOnly: true, 'aria-label': t('Link do oferty') });
     offerUrl().then((url) => { input.value = url; });
     return [
-      h('p', { class: 'small muted' }, 'Klient zobaczy skrót oferty i przycisk „Chcę rozmawiać”. Pełne opisy są w PDF.'),
+      h('p', { class: 'small muted' }, t('Klient zobaczy skrót oferty i przycisk „Chcę rozmawiać”. Pełne opisy są w PDF.')),
       input,
-      h('div', {}, h('button', { class: 'btn primary', disabled: blocked(), onClick: () => copyText(input.value, input, toast) }, 'Kopiuj link do oferty')),
+      h('div', {}, h('button', { class: 'btn primary', disabled: blocked(), onClick: () => copyText(input.value, input, toast) }, t('Kopiuj link do oferty'))),
     ];
   }
 
@@ -191,21 +192,21 @@ export function renderDesk(root, ctx, quote) {
   }
 
   function drawLockNote() {
-    side.querySelector('.lock')?.replaceChildren(blocked() ? 'Najpierw dodaj sekcje i uzupełnij wszystkie ceny.' : '');
+    side.querySelector('.lock')?.replaceChildren(blocked() ? t('Najpierw dodaj sekcje i uzupełnij wszystkie ceny.') : '');
   }
 
   function drawSide() {
-    const tabs = [['message', 'Wiadomość'], ['pdf', 'PDF'], ['link', 'Link']];
+    const tabs = [['message', t('Wiadomość')], ['pdf', 'PDF'], ['link', t('Link')]];
     side.replaceChildren(
-      h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([id, label]) => h('button', { class: id === tab ? 'on' : '', role: 'tab', onClick: () => { tab = id; drawSide(); } }, label))),
+      h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([id, label]) => h('button', { class: id === tab ? 'on' : '', role: 'tab', onClick: () => { tab = id; drawSide(); } }, t(label)))),
       h('p', { class: 'small muted lock' }),
       tabBody,
       h('div', { class: 'row' },
         h('button', {
           class: 'btn', disabled: quote.status !== 'draft',
-          onClick: () => { quote.status = 'sent'; quote.sentAt = new Date().toISOString(); store.saveQuote(quote).catch(() => toast('Nie udało się zapisać oferty.')); toast('Oznaczono jako wysłaną'); drawSide(); },
-        }, quote.status === 'draft' ? 'Oznacz jako wysłaną' : 'Wysłana'),
-        h('button', { class: 'btn link', onClick: () => navigate('quotes') }, 'Wszystkie oferty'),
+          onClick: () => { quote.status = 'sent'; quote.sentAt = new Date().toISOString(); store.saveQuote(quote).catch(() => toast(t('Nie udało się zapisać oferty.'))); toast(t('Oznaczono jako wysłaną')); drawSide(); },
+        }, quote.status === 'draft' ? t('Oznacz jako wysłaną') : t('Wysłana')),
+        h('button', { class: 'btn link', onClick: () => navigate('quotes') }, t('Wszystkie oferty')),
       ),
     );
     drawLockNote();
@@ -214,26 +215,26 @@ export function renderDesk(root, ctx, quote) {
 
   function clientCard() {
     const selectFor = (key, options) => h('select', { onChange: (e) => { quote[key] = e.target.value; changed(); } },
-      options.map(([value, label]) => h('option', { value, selected: quote[key] === value }, label)));
+      options.map(([value, label]) => h('option', { value, selected: quote[key] === value }, t(label))));
     const typeChips = h('div', { class: 'chips' });
     const drawChips = () => typeChips.replaceChildren(...settings.clientTypes.map((c) => h('button', {
       class: `chip ${quote.clientTypeId === c.id ? 'on' : ''}`,
       onClick: () => { quote.clientTypeId = c.id; drawChips(); changed(); },
-    }, `${c.labelPl} ×${c.multiplier}`)));
+    }, `${uiLang() === 'en' ? c.labelEn : c.labelPl} ×${c.multiplier}`)));
     drawChips();
     return h('section', { class: 'card' },
-      h('h2', {}, 'Klient'),
+      h('h2', {}, t('Klient')),
       h('div', { class: 'grid2' },
-        field('Firma', textInput(quote.client, 'company', changed)),
-        field('Imię i nazwisko', textInput(quote.client, 'name', changed)),
-        field('Język oferty', selectFor('lang', [['pl', 'Polski'], ['en', 'Angielski']])),
-        field('Forma zwrotu', selectFor('address', [['ty', 'Ty'], ['wy', 'Wy']])),
+        field(t('Firma'), textInput(quote.client, 'company', changed)),
+        field(t('Imię i nazwisko'), textInput(quote.client, 'name', changed)),
+        field(t('Język oferty'), selectFor('lang', [['pl', t('Polski')], ['en', t('Angielski')]])),
+        field(t('Forma zwrotu'), selectFor('address', [['ty', t('Ty')], ['wy', t('Wy')]])),
       ),
       typeChips,
       h('div', { class: 'row' },
-        h('label', { class: 'c' }, h('input', { type: 'checkbox', checked: quote.rush, onChange: (e) => { quote.rush = e.target.checked; changed(); } }), `Ekspres +${Math.round(settings.rushRate * 100)}%`),
-        quote.deadline ? h('span', { class: 'pill' }, `Termin: ${quote.deadline}`) : '',
-        quote.budget ? h('span', { class: 'pill' }, `Budżet: ${quote.budget}`) : '',
+        h('label', { class: 'c' }, h('input', { type: 'checkbox', checked: quote.rush, onChange: (e) => { quote.rush = e.target.checked; changed(); } }), t('Ekspres +{n}%', { n: Math.round(settings.rushRate * 100) })),
+        quote.deadline ? h('span', { class: 'pill' }, t('Termin: {v}', { v: quote.deadline })) : '',
+        quote.budget ? h('span', { class: 'pill' }, t('Budżet: {v}', { v: quote.budget })) : '',
       ),
     );
   }
@@ -241,18 +242,18 @@ export function renderDesk(root, ctx, quote) {
   function sourceCard() {
     if (!quote.sourceMessage) return '';
     return h('section', { class: 'card' },
-      h('h2', {}, 'Wiadomość od klienta'),
+      h('h2', {}, t('Wiadomość od klienta')),
       h('p', { class: 'source' }, highlighted(quote.sourceMessage, quote.highlights)),
-      quote.missing.length ? h('div', { class: 'stack' }, h('p', { class: 'small muted' }, 'Czego brakuje:'), h('ul', { style: 'margin:0;padding-left:18px' }, quote.missing.map((m) => h('li', {}, m)))) : '',
+      quote.missing.length ? h('div', { class: 'stack' }, h('p', { class: 'small muted' }, t('Czego brakuje:')), h('ul', { style: 'margin:0;padding-left:18px' }, quote.missing.map((m) => h('li', {}, m)))) : '',
     );
   }
 
   function coverCard() {
     const redraw = () => drawForm();
     const needRows = quote.needs.map((need, i) => h('div', { class: 'row' },
-      h('div', { style: 'width:120px' }, field('Etykieta', textInput(need, 'label', changed))),
-      h('div', { class: 'grow' }, field('Opis', textInput(need, 'text', changed))),
-      h('button', { class: 'btn small', onClick: () => { quote.needs.splice(i, 1); redraw(); changed(); } }, 'Usuń'),
+      h('div', { style: 'width:120px' }, field(t('Etykieta'), textInput(need, 'label', changed))),
+      h('div', { class: 'grow' }, field(t('Opis'), textInput(need, 'text', changed))),
+      h('button', { class: 'btn small', onClick: () => { quote.needs.splice(i, 1); redraw(); changed(); } }, t('Usuń')),
     ));
     const upload = async (e) => {
       const file = e.target.files[0];
@@ -262,15 +263,15 @@ export function renderDesk(root, ctx, quote) {
         redraw();
         changed();
       } catch {
-        toast('Nie udało się dodać grafiki.');
+        toast(t('Nie udało się dodać grafiki.'));
       }
     };
     return h('section', { class: 'card' },
-      h('h2', {}, 'Okładka'),
+      h('h2', {}, t('Okładka')),
       needRows,
-      h('div', {}, h('button', { class: 'btn small', onClick: () => { quote.needs.push({ label: '', text: '' }); redraw(); } }, 'Dodaj wiersz „Czego potrzebujecie”')),
-      field('Grafika w ciemnym panelu, bez niej pokaże się Twoje logo', h('input', { type: 'file', accept: 'image/*', onChange: upload })),
-      quote.coverAssetId ? h('div', {}, h('button', { class: 'btn small', onClick: () => { quote.coverAssetId = null; redraw(); changed(); } }, 'Usuń grafikę')) : '',
+      h('div', {}, h('button', { class: 'btn small', onClick: () => { quote.needs.push({ label: '', text: '' }); redraw(); } }, t('Dodaj wiersz „Czego potrzebujecie”'))),
+      field(t('Grafika w ciemnym panelu, bez niej pokaże się Twoje logo'), h('input', { type: 'file', accept: 'image/*', onChange: upload })),
+      quote.coverAssetId ? h('div', {}, h('button', { class: 'btn small', onClick: () => { quote.coverAssetId = null; redraw(); changed(); } }, t('Usuń grafikę'))) : '',
     );
   }
 
@@ -282,7 +283,7 @@ export function renderDesk(root, ctx, quote) {
       coverCard(),
       sectionsRoot,
       h('div', { class: 'row' },
-        sample ? h('button', { class: 'btn', onClick: (e) => writeCopy(e.currentTarget) }, 'Napisz teksty') : '',
+        sample ? h('button', { class: 'btn', onClick: (e) => writeCopy(e.currentTarget) }, t('Napisz teksty')) : '',
         copyNote,
       ),
     );
@@ -290,7 +291,7 @@ export function renderDesk(root, ctx, quote) {
   }
 
   root.append(h('div', { class: 'page' },
-    h('div', { class: 'row' }, h('h1', { class: 'grow' }, quote.client.company || quote.client.name || 'Nowa oferta'), summary),
+    h('div', { class: 'row' }, h('h1', { class: 'grow' }, quote.client.company || quote.client.name || t('Nowa oferta')), summary),
     h('div', { class: 'desk' }, form, h('aside', { class: 'card side' }, side)),
   ));
   drawForm();
