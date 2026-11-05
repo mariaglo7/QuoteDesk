@@ -9,7 +9,7 @@ export function roundUp5(x) {
 /** Sum minus the bundle discount, down to the nearest amount ending in 9. */
 export function bundlePrice(full, settings) {
   const t = Math.floor(Math.round(full * (1 - settings.bundleDiscount) * 100) / 100);
-  return t - (((t - 9) % 10) + 10) % 10;
+  return Math.max(0, t - (((t - 9) % 10) + 10) % 10);
 }
 
 function findService(item, settings) {

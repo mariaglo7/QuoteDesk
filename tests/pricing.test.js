@@ -80,6 +80,10 @@ test('bundle prices match the Harbour Light offer', () => {
   assert.equal(bundlePrice(834, S), 749);
 });
 
+test('empty bundle costs nothing', () => {
+  assert.equal(bundlePrice(0, S), 0);
+});
+
 test('bundle totals use item prices and override wins', () => {
   const q = quote({ sections: [
     { id: 's1', type: 'services', items: [item('logo'), item('flyer')] },

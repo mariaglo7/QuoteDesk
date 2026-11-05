@@ -139,6 +139,13 @@ test('banner lists item names when it has no labels', () => {
   assert.ok(texts.lastIndexOf('Logo') > texts.indexOf('Pakiet'));
 });
 
+test('empty sections are skipped', () => {
+  const q = simple();
+  q.sections = [...q.sections, { id: 'e1', type: 'options', eyebrow: 'E', title: 'Pusta', intro: '', note: '', recommendedId: null, items: [] }, { id: 'e2', type: 'services', eyebrow: '', title: 'Pusta2', intro: '', note: '', items: [] }];
+  const { all } = render(q);
+  assert.ok(!all.includes('Pusta'));
+});
+
 test('no bank details', () => {
   assert.doesNotMatch(render().all, /sort code|account number|numer konta/i);
 });

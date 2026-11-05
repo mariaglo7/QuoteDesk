@@ -1,0 +1,64 @@
+// Code written with help from Claude (Anthropic)
+import { h, claudeErrorText } from './dom.js';
+import { buildExtractPrompt, parseExtraction } from '../claude.js';
+import { newId, newQuote } from '../quote.js';
+import { toISODate } from '../text.js';
+
+const infoSection = () => ({ id: newId(), type: 'info', included: '', files: '', time: '' });
+
+function quoteFromExtraction(extraction, message) {
+  return {
+    ...newQuote(),
+    client: { name: extraction.name, company: extraction.company, email: '' },
+    lang: extraction.lang, address: extraction.address, clientTypeId: extraction.clientTypeId,
+    rush: extraction.rush, deadline: extraction.deadline, budget: extraction.budget,
+    sections: extraction.sections.length ? [...extraction.sections, infoSection()] : [],
+    sourceMessage: message, missing: extraction.missing, highlights: extraction.highlights,
+  };
+}
+
+export function renderInbox(root, ctx) {
+  const { sample, settings, navigate } = ctx;
+  const box = h('textarea', { id: 'client-message', rows: 10, placeholder: 'Hej! Otwieram piekarnię w Aberdeen i potrzebuję logo i prostej strony…' });
+  const error = h('p', { class: 'error', role: 'alert' });
+
+  async function read(button) {
+    const message = box.value.trim();
+    if (!message) {
+      error.textContent = 'Wklej najpierw wiadomość od klienta.';
+      return;
+    }
+    if (!sample) {
+      navigate('desk', { ...newQuote(), sourceMessage: message });
+      return;
+    }
+    button.disabled = true;
+    button.textContent = 'Czytam wiadomość…';
+    error.textContent = '';
+    try {
+      const raw = await sample.json(buildExtractPrompt(message, settings, toISODate(new Date())));
+      const quote = quoteFromExtraction(parseExtraction(raw, settings, toISODate(new Date())), message);
+      ctx.autoCopy = quote.sections.length > 0;
+      navigate('desk', quote);
+    } catch (e) {
+      if (e?.code === 'rate_limited') {
+        error.textContent = claudeErrorText(e);
+        button.disabled = false;
+        button.textContent = 'Przeczytaj';
+        return;
+      }
+      ctx.toast(claudeErrorText(e));
+      navigate('desk', { ...newQuote(), sourceMessage: message });
+    }
+  }
+
+  const readButton = h('button', { class: 'btn primary', onClick: (e) => read(e.currentTarget) }, 'Przeczytaj');
+  root.append(h('div', { class: 'page narrow' },
+    h('h1', {}, 'Wklej wiadomość od klienta'),
+    h('p', { class: 'muted' }, 'Mail, DM z Instagrama albo notatka z rozmowy. Claude rozpozna, czego klient potrzebuje, a Ty sprawdzisz ceny.'),
+    box,
+    error,
+    h('div', { class: 'row' }, readButton, h('button', { class: 'btn', onClick: () => navigate('desk', newQuote()) }, 'Zacznij od zera')),
+    sample ? '' : h('p', { class: 'small muted' }, 'Claude jest dostępny po otwarciu aplikacji na claude.ai. Tutaj uzupełnisz ofertę ręcznie.'),
+  ));
+}

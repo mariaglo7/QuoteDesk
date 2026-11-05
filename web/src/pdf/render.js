@@ -23,6 +23,8 @@ function firstBlockHeight(section, flow) {
   return 90;
 }
 
+const hasContent = (section) => section.type === 'info' || (section.items ?? section.bundles ?? []).length > 0;
+
 function drawSection(doc, section, ctx) {
   const { flow, totals, L, settings, quote, report } = ctx;
   if (section.newPage && flow.y > THEME.contentTop) flow.newPage();
@@ -55,7 +57,7 @@ export function renderOfferPdf({ jsPDF, fonts, logos, coverImage = null, quote, 
 
   flow.newPage();
   const ctx = { flow, totals, L, settings, quote, report };
-  for (const section of quote.sections) drawSection(doc, section, ctx);
+  for (const section of quote.sections.filter(hasContent)) drawSection(doc, section, ctx);
 
   drawTerms(doc, {
     report,

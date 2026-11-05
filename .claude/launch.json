@@ -1,0 +1,4 @@
+{ "version": "0.0.1", "configurations": [
+  { "name": "wyceny", "runtimeExecutable": "node", "runtimeArgs": ["/Users/mariaglowacka/Desktop/RGU/App/tools/serve.mjs", "web", "4173"], "port": 4173 },
+  { "name": "oferta", "runtimeExecutable": "node", "runtimeArgs": ["/Users/mariaglowacka/Desktop/RGU/App/tools/serve.mjs", "hostinger", "4174"], "port": 4174 }
+] }
