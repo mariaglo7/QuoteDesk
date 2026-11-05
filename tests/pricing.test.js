@@ -1,0 +1,127 @@
+// Code written with help from Claude (Anthropic)
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { roundUp5, bundlePrice, priceItem, calcQuote } from '../web/src/pricing.js';
+import { DEFAULT_SETTINGS } from '../web/src/defaults.js';
+
+const S = {
+  ...DEFAULT_SETTINGS,
+  priceList: [
+    ...DEFAULT_SETTINGS.priceList,
+    { id: 'logo', namePl: 'Logo', nameEn: 'Logo', price: 200, priceFrom: false, unit: 'item', category: 'branding', applyMultiplier: true },
+    { id: 'flyer', namePl: 'Ulotka', nameEn: 'Flyer', price: 75, priceFrom: false, unit: 'item', category: 'print', applyMultiplier: true },
+    { id: 'page', namePl: 'Podstrona', nameEn: 'Page', price: 120, priceFrom: false, unit: 'page', category: 'website', applyMultiplier: false },
+    { id: 'refresh', namePl: 'Odświeżenie', nameEn: 'Refresh', price: 250, priceFrom: true, unit: 'item', category: 'other', applyMultiplier: false },
+    { id: 'social', namePl: 'Start', nameEn: 'Start', price: 199, priceFrom: false, unit: 'month', category: 'social', applyMultiplier: false },
+  ],
+};
+const item = (serviceId, extra = {}) => ({ id: `i_${serviceId}`, serviceId, name: serviceId, qty: 1, unitPriceOverride: null, ...extra });
+const quote = (extra = {}) => ({ clientTypeId: 'sole', rush: false, sections: [], ...extra });
+const servicesQuote = (items, extra) => quote({ sections: [{ id: 's1', type: 'services', items }], ...extra });
+
+test('roundUp5 ignores float noise', () => {
+  assert.equal(roundUp5(200 * 1.2), 240);
+  assert.equal(roundUp5(241), 245);
+});
+
+test('multiplier by client type', () => {
+  assert.equal(priceItem(item('logo'), quote({ clientTypeId: 'large' }), S).unitPrice, 320);
+});
+
+test('intermediary multiplier is 1.2', () => {
+  assert.equal(priceItem(item('logo'), quote({ clientTypeId: 'intermediary' }), S).unitPrice, 240);
+});
+
+test('fixed items ignore multiplier and rush', () => {
+  const p = priceItem(item('post', { qty: 4 }), quote({ clientTypeId: 'large', rush: true }), S);
+  assert.equal(p.lineTotal, 140);
+});
+
+test('rush adds 25% then rounds', () => {
+  assert.equal(priceItem(item('logo'), quote({ clientTypeId: 'local', rush: true }), S).unitPrice, 300);
+});
+
+test('override wins and is not multiplied', () => {
+  const p = priceItem(item('logo', { unitPriceOverride: 99 }), quote({ clientTypeId: 'large' }), S);
+  assert.equal(p.unitPrice, 99);
+});
+
+test('unit month is monthly', () => {
+  assert.equal(priceItem(item('care'), quote(), S).monthly, true);
+  assert.equal(priceItem(item('logo'), quote(), S).monthly, false);
+});
+
+test('page unit multiplies by qty', () => {
+  assert.equal(priceItem(item('page', { qty: 5 }), quote(), S).lineTotal, 600);
+});
+
+test('priceFrom flows from service to totals', () => {
+  const t = calcQuote(servicesQuote([item('refresh')]), S);
+  assert.equal(t.items.i_refresh.priceFrom, true);
+});
+
+test('unknown service needs price', () => {
+  const t = calcQuote(servicesQuote([item(null, { id: 'x' })]), S);
+  assert.equal(t.items.x.needsPrice, true);
+  assert.equal(t.items.x.unitPrice, null);
+  assert.equal(t.needsPrice, true);
+  assert.equal(t.estimate.oneOff, 0);
+});
+
+test('unknown service with override is priced', () => {
+  const t = calcQuote(servicesQuote([item(null, { id: 'x', unitPriceOverride: 50 })]), S);
+  assert.equal(t.needsPrice, false);
+  assert.equal(t.estimate.oneOff, 50);
+});
+
+test('bundle prices match the Harbour Light offer', () => {
+  assert.equal(bundlePrice(355, S), 319);
+  assert.equal(bundlePrice(455, S), 409);
+  assert.equal(bundlePrice(834, S), 749);
+});
+
+test('bundle totals use item prices and override wins', () => {
+  const q = quote({ sections: [
+    { id: 's1', type: 'services', items: [item('logo'), item('flyer')] },
+    { id: 's2', type: 'bundles', bundles: [
+      { id: 'b1', name: 'A', itemIds: ['i_logo', 'i_flyer'], priceOverride: null },
+      { id: 'b2', name: 'B', itemIds: ['i_logo', 'i_flyer'], priceOverride: 250 },
+    ] },
+  ] });
+  const t = calcQuote(q, S);
+  assert.deepEqual(t.bundles.b1, { fullPrice: 275, price: 239 });
+  assert.deepEqual(t.bundles.b2, { fullPrice: 275, price: 250 });
+});
+
+test('estimate uses recommended option and services', () => {
+  const q = quote({ sections: [
+    { id: 's1', type: 'options', recommendedId: 'i_social', items: [item('care'), item('social')] },
+    { id: 's2', type: 'services', items: [item('logo')] },
+  ] });
+  assert.deepEqual(calcQuote(q, S).estimate, { oneOff: 200, monthly: 199 });
+});
+
+test('estimate falls back to the first option', () => {
+  const q = quote({ sections: [{ id: 's1', type: 'options', recommendedId: null, items: [item('logo'), item('flyer')] }] });
+  assert.equal(calcQuote(q, S).estimate.oneOff, 200);
+});
+
+test('hasWebsite is only for category website', () => {
+  assert.equal(calcQuote(servicesQuote([item('care')]), S).hasWebsite, false);
+  assert.equal(calcQuote(servicesQuote([item('page')]), S).hasWebsite, true);
+});
+
+test('hasPrint is only for category print', () => {
+  assert.equal(calcQuote(servicesQuote([item('logo')]), S).hasPrint, false);
+  assert.equal(calcQuote(servicesQuote([item('flyer')]), S).hasPrint, true);
+});
+
+test('default settings match the agreed values', () => {
+  const m = Object.fromEntries(DEFAULT_SETTINGS.clientTypes.map((c) => [c.id, c.multiplier]));
+  assert.deepEqual(m, { sole: 1, local: 1.2, intermediary: 1.2, medium: 1.4, large: 1.6 });
+  assert.equal(DEFAULT_SETTINGS.extraRoundPrice, 40);
+  assert.equal(DEFAULT_SETTINGS.rushRate, 0.25);
+  assert.equal(DEFAULT_SETTINGS.validityDays, 7);
+  assert.equal(DEFAULT_SETTINGS.priceList.find((p) => p.id === 'post').price, 35);
+  assert.equal(DEFAULT_SETTINGS.priceList.find((p) => p.id === 'care').price, 50);
+});

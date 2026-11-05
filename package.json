@@ -1,0 +1,13 @@
+{
+  "name": "wyceny-design-by-maria",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "pack:hostinger": "cp web/src/offerLink.js hostinger/oferta/offer.js"
+  },
+  "devDependencies": {
+    "jspdf": "^2.5.1"
+  }
+}
