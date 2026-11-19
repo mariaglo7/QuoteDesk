@@ -22,7 +22,7 @@ function toast(text) {
 async function boot() {
   const store = await createStore();
   const settings = await store.getSettings();
-  setUiLang(settings.uiLang);
+  setUiLang(settings.uiLang ?? (navigator.language?.toLowerCase().startsWith('pl') ? 'pl' : 'en'));
   const use = (name) => (window.claude?.use ? window.claude.use(name) : Promise.resolve(null));
   setCurrency(settings.profile.currency);
   const [sample, downloads] = await Promise.all([use('sample'), use('downloads')]);
