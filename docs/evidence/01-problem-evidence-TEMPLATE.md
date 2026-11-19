@@ -16,17 +16,16 @@ AI may help you organise it afterwards, but it may not write the facts (CM3026 r
 
 Pick 2 or 3 real past quotes. Do not write client names, use "Client A", "Client B".
 
-Times, outcomes and AI use for A, B and C are Maria's own answers from memory, given in Polish on 19 November 2026. Other facts below come from the PDF files in Maria's offers folder (file dates and page counts read by the AI, client names removed). Maria adds the columns marked "Maria".
+Times, outcomes and AI use for A, B and C are Maria's own answers from memory, given on 19 November 2026. Other facts below come from the PDF files in Maria's offers folder (file dates and page counts read by the AI, client names removed). Maria adds the columns marked "Maria".
 
 | Quote | Type of work (from the PDF) | PDF created | Pages | Time from enquiry to sent offer (Maria) | Time actually spent (Maria) | What took longest (Maria) | Client outcome (Maria) | AI used to build it? (Maria) |
 |---|---|---|---|---|---|---|---|---|
-| Client A | 3 month social media and Google plan with monthly packages | 15 Oct 2026, 12:53 | 3 | | about 1 hour ("godzinę") | | dropped out ("zrezygnował") | yes, Claude ("pomagał mi przy nich Claude") |
-| Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | 1 to 2 hours ("1-2 godziny") | | accepted one of the packages ("przyjął jeden z pakietów") | yes, Claude ("pomagał mi przy nich Claude") |
-| Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | about 2 hours ("2 godziny") | | accepted the flyer and catalogue design; for marketing proposed a different arrangement, a percentage of sales, still being considered ("przyjął ofertę na projekt ulotki i katalogu, w kwestii marketingu zaproponował mi inne rozwiązanie, nad którym muszę się zastanowić (procent od sprzedaży)") | yes, Claude ("pomagał mi przy nich Claude") |
+| Client A | 3 month social media and Google plan with monthly packages | 15 Oct 2026, 12:53 | 3 | | about 1 hour | | dropped out | yes, Claude |
+| Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | 1 to 2 hours | | accepted one of the packages | yes, Claude |
+| Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | about 2 hours | | accepted the flyer and catalogue design; for marketing proposed a different arrangement, a percentage of sales, still being considered | yes, Claude |
 
-Maria's own estimate, written in Polish on 19 November 2026 (English translation by AI):
+Maria's own estimate, 19 November 2026 (English translation of her message, made with AI):
 
-> Czas wyceny zależy od klienta, tego co on oczekuje itd. Czasem zajmuje 30 minut, czasem 2 do 3 godzin.
 
 > The time a quote takes depends on the client, what they expect and so on. Sometimes it takes 30 minutes, sometimes 2 to 3 hours.
 
@@ -38,9 +37,8 @@ Important for the comparison: these three quotes were already made with help fro
 
 Write concrete moments, not general opinions.
 
-Maria's own words, written in Polish on 19 November 2026 (original kept; English translation made with AI and checked by Maria):
+Maria's own words, 19 November 2026 (English translation of her message, made with AI):
 
-> Ja mam zawsze problem z wyceną, ponieważ nigdy nie chcę przesadzić z kwotą, a teraz w dobie AI część ludzi rezygnuje po usłyszeniu kwoty, ponieważ twierdzi, że za drogo i „AI zrobi im stronę”. Robię duży research, jakie kwoty biorą inne firmy, sprawdzam, co dzięki mnie może osiągnąć taka firma, czy jest to mała działalność czy duża, czy mają budżet na reklamę itd. To zajmowało mi zawsze bardzo dużo czasu, i finalnie, żeby to wszystko ubrać w słowa i w konkretną ofertę, było dla mnie dość straszne.
 
 > I always struggle with pricing because I never want to overcharge, and now, in the age of AI, some people drop out after hearing the price because they say it is too expensive and "AI will make them a website". I do a lot of research on what other companies charge, I check what the client's business could achieve thanks to my work, whether it is a small or a large business, whether they have an advertising budget and so on. This always took me a lot of time, and in the end putting all of it into words and into a concrete offer was quite daunting for me.
 
