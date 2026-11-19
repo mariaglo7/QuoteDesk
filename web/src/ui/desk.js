@@ -5,7 +5,7 @@ import { renderSections, paintPrices } from './sections.js';
 import { loadPdfAssets, loadPdfViewer } from './pdfAssets.js';
 import { calcQuote, freezePrices } from '../pricing.js';
 import { renderOfferPdf } from '../pdf/render.js';
-import { buildCopyPrompt, parseCopy, buildMessagePrompt, insertLink } from '../claude.js';
+import { buildCopyPrompt, parseCopy, buildMessagePrompt, insertLink, buildValuePrompt, parseValue } from '../claude.js';
 import { fallbackMessage } from '../templates.js';
 import { makeOfferPayload, encodeOffer, signPayload, buildOfferUrl } from '../offerLink.js';
 import { formatMoney, offerFileName, stripDashes, toISODate } from '../text.js';
@@ -52,6 +52,7 @@ export function renderDesk(root, ctx, quote) {
   const persist = debounce(() => store.saveQuote(quote).catch(() => toast(t('Nie udało się zapisać oferty.'))), 800);
   ctx.leave = () => {
     alive = false;
+    ctx.writeValue = null;
     return persist.flush();
   };
   const refreshPreview = debounce(() => { if (tab === 'pdf') drawTab(); }, 800);
@@ -126,7 +127,7 @@ export function renderDesk(root, ctx, quote) {
     copyNote.textContent = t('Claude pisze teksty oferty…');
     form.inert = true;
     try {
-      const raw = await sample.json(buildCopyPrompt({ quote }), { cache: false });
+      const raw = await sample.json(buildCopyPrompt({ quote, settings }), { cache: false });
       if (!alive) return;
       const updated = parseCopy(raw, quote);
       quote.needs = updated.needs;
@@ -140,6 +141,33 @@ export function renderDesk(root, ctx, quote) {
     form.inert = false;
     if (button) button.disabled = false;
   }
+
+  async function writeValue(button) {
+    if (!sample) {
+      toast(claudeErrorText({ code: 'not_granted' }));
+      return;
+    }
+    if (button) button.disabled = true;
+    copyNote.textContent = t('Claude pisze sekcję „Co zyskujecie”…');
+    form.inert = true;
+    try {
+      const value = parseValue(await sample.json(buildValuePrompt({ quote, settings }), { cache: false }));
+      if (!alive) return;
+      if (!value) throw new Error('invalid');
+      const at = quote.sections.findIndex((s) => s.type === 'value');
+      const info = quote.sections.findIndex((s) => s.type === 'info');
+      if (at >= 0) quote.sections.splice(at, 1, { ...value, id: quote.sections[at].id });
+      else quote.sections.splice(info >= 0 ? info : quote.sections.length, 0, value);
+      copyNote.textContent = '';
+      drawForm();
+      persist();
+    } catch (e) {
+      copyNote.textContent = claudeErrorText(e);
+    }
+    form.inert = false;
+    if (button) button.disabled = false;
+  }
+  ctx.writeValue = sample ? writeValue : null;
 
   async function writeMessage(tone, area, button) {
     const url = await offerUrl();
@@ -355,6 +383,6 @@ export function renderDesk(root, ctx, quote) {
   ready = true;
   if (ctx.autoCopy) {
     ctx.autoCopy = false;
-    writeCopy();
+    writeCopy().then(() => { if (alive && !quote.sections.some((s) => s.type === 'value')) writeValue(); });
   }
 }

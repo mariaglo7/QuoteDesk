@@ -164,3 +164,29 @@ test('insertLink appends the link when Claude dropped the placeholder', () => {
 test('insertLink removes the placeholder without a link', () => {
   assert.ok(!insertLink('Oferta: {{LINK}}', '').includes('{{LINK}}'));
 });
+
+test('value prompt asks for client gains without numbers, guarantees or invented facts', async () => {
+  const { buildValuePrompt } = await import('../web/src/claude.js');
+  const p = buildValuePrompt({ quote: { ...REFERENCE, sourceMessage: 'Need a catalogue' }, settings: S });
+  assert.ok(p.includes('Need a catalogue'));
+  assert.match(p, /never promise numbers/i);
+  assert.match(p, /guarantee/i);
+  assert.match(p, /do not invent/i);
+  assert.match(p, /AI tools/);
+  assert.match(p, /only with JSON/i);
+  assert.match(p, /Polish/);
+});
+
+test('parseValue keeps 3 to 5 clean points', async () => {
+  const { parseValue } = await import('../web/src/claude.js');
+  const v = parseValue({ title: 'Co zyskujecie.', points: ['A — jeden', 'B', 'C', 'D', 'E', 'F'] });
+  assert.equal(v.type, 'value');
+  assert.equal(v.title, 'Co zyskujecie');
+  assert.deepEqual(v.points, ['A, jeden', 'B', 'C', 'D', 'E']);
+});
+
+test('parseValue rejects fewer than 3 points or bad input', async () => {
+  const { parseValue } = await import('../web/src/claude.js');
+  assert.equal(parseValue({ title: 'X', points: ['A', 'B'] }), null);
+  assert.equal(parseValue('oops'), null);
+});

@@ -45,3 +45,8 @@ test('fallback follow up in both languages', () => {
   assert.ok(fallbackFollowUp(args({ ...REFERENCE, lang: 'en' })).includes('offer'));
   noDashes(fallbackFollowUp(args()));
 });
+
+test('fallback message mentions the value points', () => {
+  const q = { ...REFERENCE, sections: [...REFERENCE.sections, { id: 'v', type: 'value', title: 'Co zyskujecie', points: ['Spójna marka', 'Mniej pracy', 'Wsparcie'] }] };
+  assert.ok(fallbackMessage(args(q, calcQuote(q, S))).includes('Spójna marka'));
+});

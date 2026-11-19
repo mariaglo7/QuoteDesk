@@ -23,12 +23,15 @@ function paragraphs(parts) {
 
 export function fallbackMessage({ quote, totals, settings, offerUrl }) {
   const lines = offerLines(quote, totals).join('\n');
+  const value = quote.sections.find((s) => s.type === 'value');
+  const gains = value?.points.length ? `${value.title}:\n${value.points.join('\n')}` : '';
   const questions = quote.missing.join('\n');
   if (quote.lang === 'en') {
     return paragraphs([
       greeting(quote),
       'Thank you for your message. Here is my offer:',
       lines,
+      gains,
       `The price includes ${settings.profile.includedRounds} rounds of revisions. I start after a 50% deposit by bank transfer.`,
       totals.hasWebsite && 'Hosting and the domain are bought on your own account and are not included in the website price.',
       questions,
@@ -40,6 +43,7 @@ export function fallbackMessage({ quote, totals, settings, offerUrl }) {
     greeting(quote),
     `Dziękuję za wiadomość. ${pl(quote, 'Przygotowałam dla Ciebie ofertę:', 'Przygotowałam dla Was ofertę:')}`,
     lines,
+    gains,
     `Rundy poprawek w cenie: ${settings.profile.includedRounds}. Zaczynam po wpłacie 50% zaliczki przelewem.`,
     totals.hasWebsite && pl(quote, 'Hosting i domenę kupujesz na swoim koncie, nie są wliczone w cenę strony.', 'Hosting i domenę kupujecie na swoim koncie, nie są wliczone w cenę strony.'),
     questions,

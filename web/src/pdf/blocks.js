@@ -448,6 +448,30 @@ export function drawBundleBanner(doc, section, totals, flow, quote) {
   }
 }
 
+function valueRows(section, flow) {
+  return section.points.map((p) => flow.wrap(p, 'light', 10, T.contentWidth - 24));
+}
+
+export function measureValue(section, flow) {
+  return valueRows(section, flow).reduce((sum, lines) => sum + lines.length * 15 + 18, 10);
+}
+
+export function drawValue(doc, section, flow) {
+  const right = T.margin + T.contentWidth;
+  for (const lines of valueRows(section, flow)) {
+    const height = lines.length * 15 + 18;
+    flow.ensure(height);
+    const y = flow.y;
+    hairline(doc, T.margin, y, right);
+    dot(doc, T.margin + 4, y + 18 - 3.5, 3);
+    setText(doc, 'light', 10, T.ink);
+    drawLines(doc, lines, T.margin + 18, y + 18, 10, 1.5);
+    flow.y = y + height;
+  }
+  hairline(doc, T.margin, flow.y, right);
+  flow.y += 14;
+}
+
 export function drawInfoCards(doc, section, flow, L, settings, lang) {
   const defaults = settings.infoCards[lang];
   const cards = [

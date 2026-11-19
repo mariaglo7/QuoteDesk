@@ -184,9 +184,11 @@ export function insertLink(text, url) {
 }
 
 function offerFacts({ quote, totals, settings, offerUrl }) {
+  const value = quote.sections.find((s) => s.type === 'value');
   return `Client: ${quote.client.name || 'unknown'}, ${quote.client.company || 'no company'}
 Prices, never change them and never add new ones:
 ${offerLines(quote, totals).join('\n')}
+${value ? `What the client gains (mention one or two of these):\n${value.points.join('\n')}` : ''}
 Online offer link: ${offerUrl ? 'write exactly {{LINK}} where the link belongs' : '(not available, leave it out)'}
 Signature, use exactly:
 ${signatureFrom(settings.profile)}`;
@@ -219,4 +221,36 @@ No pressure. Ask if they have questions and mention the offer is valid for ${set
 ${offerFacts({ quote, totals, settings, offerUrl })}
 
 Reply only with the message text.`;
+}
+
+const clientDescription = (quote, settings) => {
+  const type = settings.clientTypes.find((c) => c.id === quote.clientTypeId);
+  return `${quote.client.company || quote.client.name || 'the client'} (${type?.labelEn ?? 'small business'})`;
+};
+
+/** "What you gain": the value of human work, for clients who think AI will do it for free. */
+export function buildValuePrompt({ quote, settings }) {
+  const services = quote.sections.flatMap((s) => s.items ?? []).map((i) => i.name).filter(Boolean);
+  return `${voice(settings.profile)}
+
+Write a short "What you gain" section for an offer in ${languageName(quote.lang)} to ${clientDescription(quote, settings)}. ${addressRule(quote)}
+Services in the offer: ${services.join(', ') || '(none yet)'}.
+Give 3 to 5 points, each one short sentence, about what this client gains from working with a person rather than generating the work alone:
+fit to their brand, customers and goals, strategy and judgement, responsibility for the result, revisions, files ready to use, support after delivery.
+Mention AI tools at most once and respectfully: they can help, but they do not know this business, do not take responsibility and do not support it afterwards.
+Never promise numbers, percentages, sales or rankings, and never guarantee results. Do not invent facts about the client; use only the enquiry below.
+Title: 2 or 3 words, no final full stop.
+
+Client enquiry:
+${quote.sourceMessage || '(none)'}
+
+Reply only with JSON, no other text, matching:
+{ "title": "", "points": ["", "", ""] }`;
+}
+
+export function parseValue(raw) {
+  if (raw === null || typeof raw !== 'object' || typeof raw.title !== 'string') return null;
+  const points = strings(raw.points).map(clean).slice(0, 5);
+  if (points.length < 3) return null;
+  return { id: newId(), type: 'value', eyebrow: '', title: cleanTitle(raw.title), intro: '', note: '', points };
 }

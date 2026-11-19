@@ -6,6 +6,8 @@ export const EN = {
   'Główne': 'Main', 'Zapis tylko na tym urządzeniu.': 'Saved on this device only.',
   'Cennik ma tylko post i opiekę nad stroną. ': 'The price list only has a post and website care. ',
   'Uzupełnij cennik': 'Complete the price list', 'Skopiowano': 'Copied',
+  'Co zyskujecie': 'What you gain', 'Bez obietnic liczb i wyników. Sprawdź tekst przed wysłaniem.': 'No promised numbers or results. Check the text before sending.',
+  'Napisz z Claude': 'Write with Claude', 'Claude pisze sekcję „Co zyskujecie”…': 'Claude is writing the "What you gain" section…',
   'Zakres rynkowy z Twojego researchu. Aplikacja pokaże, gdzie wypada Twoja cena.': 'Market range from your own research. The app shows where your price sits.',
   'Rynek od': 'Market from', 'Rynek do': 'Market to', 'Źródło': 'Source', 'np. cenniki 5 studiów z Aberdeen': 'e.g. price lists of 5 local studios',
   'Data sprawdzenia': 'Date checked', 'poniżej rynku': 'below market', 'w zakresie rynku': 'within market', 'powyżej rynku': 'above market',

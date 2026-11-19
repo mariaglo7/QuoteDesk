@@ -243,6 +243,14 @@ test('euro offer prints euro amounts', () => {
   assert.ok(!all.includes('£'));
 });
 
+test('value section draws its title and every point', () => {
+  const q = simple();
+  q.sections = [...q.sections, { id: 'v', type: 'value', eyebrow: '', title: 'Co zyskujecie', intro: '', note: '', points: ['Spójna marka we wszystkich kanałach', 'Pliki gotowe do druku', 'Wsparcie po oddaniu projektu'] }];
+  const { all } = render(q);
+  assert.ok(all.includes('Co zyskujecie'));
+  assert.ok(all.includes('Pliki gotowe do druku'));
+});
+
 test('no bank details', () => {
   assert.doesNotMatch(render().all, /sort code|account number|numer konta/i);
 });

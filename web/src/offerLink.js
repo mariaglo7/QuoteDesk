@@ -44,7 +44,7 @@ export function makeOfferPayload(quote, totals, settings, today) {
     lang: quote.lang,
     date: today,
     exp: exp.toISOString().slice(0, 10),
-    sections: quote.sections.filter((s) => s.type !== 'info').map((s) => summarizeSection(s, totals)),
+    sections: quote.sections.filter((s) => s.type !== 'info' && s.type !== 'value').map((s) => summarizeSection(s, totals)),
   };
 }
 

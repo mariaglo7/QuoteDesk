@@ -5,13 +5,14 @@ import { h, field, textInput, textArea, numberInput, linesArea } from './dom.js'
 import { newId, emptyItem, itemFromService } from '../quote.js';
 import { formatMoney } from '../text.js';
 
-const TYPE_LABELS = { options: 'Warianty', services: 'Usługi', bundles: 'Pakiety', info: 'Karty W cenie, Pliki, Czas' };
+const TYPE_LABELS = { options: 'Warianty', services: 'Usługi', bundles: 'Pakiety', value: 'Co zyskujecie', info: 'Karty W cenie, Pliki, Czas' };
 
 export function newSection(type) {
   const base = { id: newId(), type, eyebrow: '', title: '', intro: '', note: '' };
   if (type === 'options') return { ...base, recommendedId: null, items: [] };
   if (type === 'services') return { ...base, items: [] };
   if (type === 'bundles') return { ...base, style: 'rows', bundles: [] };
+  if (type === 'value') return { ...base, title: t('Co zyskujecie'), points: [] };
   return { id: newId(), type: 'info', included: '', files: '', time: '' };
 }
 
@@ -99,6 +100,13 @@ function sectionEditor(section, index, quote, ctx, onChange, redraw) {
         h('option', { value: 'banner', selected: section.style === 'banner' }, t('Ciemny baner')))),
       section.bundles.map((bundle) => bundleEditor(section, bundle, quote, onChange, redraw)),
       h('div', {}, h('button', { class: 'btn small', onClick: () => { section.bundles.push({ id: newId(), name: '', itemIds: [], priceOverride: null, caption: quote.lang === 'en' ? 'one off' : 'jednorazowo' }); redraw(); } }, t('Dodaj pakiet'))),
+    );
+  }
+  if (section.type === 'value') {
+    body.push(
+      field(t('Punkty, jeden w linii'), linesArea(section, 'points', onChange, { rows: 5 })),
+      h('p', { class: 'small muted' }, t('Bez obietnic liczb i wyników. Sprawdź tekst przed wysłaniem.')),
+      ctx.writeValue ? h('div', {}, h('button', { class: 'btn small', onClick: (e) => ctx.writeValue(e.currentTarget) }, t('Napisz z Claude'))) : '',
     );
   }
   if (section.type === 'info') {

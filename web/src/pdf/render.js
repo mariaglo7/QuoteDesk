@@ -5,7 +5,7 @@ import { createFlow } from './layout.js';
 import { formatMoney, setCurrency } from '../text.js';
 import {
   LABELS, drawCover, drawPageHeader, measureSectionHead, drawSectionHead, measureOptionRow, drawOptionCards,
-  measureServiceRow, drawServiceRows, measureBanner, measureBundleStart, drawBundleRows, drawBundleBanner, drawInfoCards, drawNote, drawTerms, drawHostingerPage,
+  measureServiceRow, drawServiceRows, measureBanner, measureBundleStart, measureValue, drawValue, drawBundleRows, drawBundleBanner, drawInfoCards, drawNote, drawTerms, drawHostingerPage,
 } from './blocks.js';
 
 function visibleTerms(settings, lang, totals) {
@@ -22,10 +22,11 @@ function firstBlockHeight(section, flow, ctx) {
   if (section.type === 'services') return measureServiceRow(section.items[0], flow).height;
   if (section.type === 'bundles' && section.style === 'banner') return measureBanner(section.bundles[0], ctx.quote, flow).height + 16;
   if (section.type === 'bundles') return measureBundleStart(section, flow);
+  if (section.type === 'value') return Math.min(measureValue(section, flow), 120);
   return 90;
 }
 
-const hasContent = (section) => section.type === 'info' || (section.items ?? section.bundles ?? []).length > 0;
+const hasContent = (section) => section.type === 'info' || (section.items ?? section.bundles ?? section.points ?? []).length > 0;
 
 function drawSection(doc, section, ctx) {
   const { flow, totals, L, settings, quote, report } = ctx;
@@ -42,6 +43,7 @@ function drawSection(doc, section, ctx) {
   if (section.type === 'services') drawServiceRows(doc, section, totals, flow, L, report);
   if (section.type === 'bundles' && section.style === 'banner') drawBundleBanner(doc, section, totals, flow, quote);
   if (section.type === 'bundles' && section.style !== 'banner') drawBundleRows(doc, section, totals, flow);
+  if (section.type === 'value') drawValue(doc, section, flow);
   if (section.type === 'info') drawInfoCards(doc, section, flow, L, settings, quote.lang);
   if (section.note) drawNote(doc, section.note, flow);
 }
