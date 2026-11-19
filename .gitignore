@@ -3,3 +3,4 @@ node_modules/
 hostinger/oferta/config.php
 hostinger/test-links.txt
 .DS_Store
+_site/
