@@ -24,7 +24,13 @@ Facts below come from the PDF files in Maria's offers folder (file dates and pag
 | Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | | | | |
 | Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | | | | |
 
-How I measured the times (timer, calendar, estimate from memory):
+Maria's own estimate, written in Polish on 19 November 2026 (English translation by AI):
+
+> Czas wyceny zależy od klienta, tego co on oczekuje itd. Czasem zajmuje 30 minut, czasem 2 do 3 godzin.
+
+> The time a quote takes depends on the client, what they expect and so on. Sometimes it takes 30 minutes, sometimes 2 to 3 hours.
+
+How I measured the times: estimate from memory (not timed). To strengthen this, time the next real quote made without QuoteDesk, or note start and end times from email or Instagram timestamps.
 
 ## 3. Problems I noticed in my own process
 
