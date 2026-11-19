@@ -2,7 +2,9 @@
 import { t, uiLang } from '../i18n.js';
 import { h, field, textInput, textArea, numberInput, linesArea, copyText, debounce } from './dom.js';
 import { newId } from '../quote.js';
-import { setCurrency } from '../text.js';
+import { setCurrency, toISODate } from '../text.js';
+import { makeBackup, readBackup } from '../backup.js';
+import { readStoredKey } from '../ai.js';
 
 const UNITS = [['item', 'sztuka'], ['page', 'podstrona'], ['month', 'miesiąc']];
 const CATEGORIES = [['branding', 'Branding'], ['print', 'Druk'], ['website', 'Strona'], ['social', 'Social media'], ['care', 'Opieka'], ['other', 'Inne']];
@@ -130,6 +132,66 @@ export function renderSettings(root, ctx) {
     );
   }
 
+  function aiCard() {
+    if (ctx.isArtifact) return '';
+    const key = h('input', { type: 'password', autocomplete: 'off', value: readStoredKey(), placeholder: 'sk-ant-…', 'aria-label': t('Klucz API Anthropic') });
+    return h('section', { class: 'card' },
+      h('h2', {}, t('Claude')),
+      h('p', { class: 'small muted' }, t('Wklej własny klucz API z console.anthropic.com. Klucz zostaje tylko w tej przeglądarce i nie trafia do kopii zapasowej. Koszt zapytań płacisz na swoim koncie Anthropic. Wiadomości klientów są wysyłane do Anthropic, więc usuń z nich dane wrażliwe.')),
+      field(t('Klucz API Anthropic'), key),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn', onClick: () => { ctx.setApiKey(key.value.trim()); toast(t('Zapisano klucz')); } }, t('Zapisz klucz')),
+        h('button', { class: 'btn', onClick: () => { key.value = ''; ctx.setApiKey(''); toast(t('Usunięto klucz')); } }, t('Usuń klucz')),
+      ));
+  }
+
+  function backupCard() {
+    const note = h('p', { class: 'small muted' });
+    const exportData = async () => {
+      const filename = `quotedesk_backup_${toISODate(new Date()).replaceAll('-', '')}.json`;
+      const text = makeBackup(settings, await store.listQuotes(), new Date());
+      if (ctx.downloads) {
+        await ctx.downloads.save({ filename, data: text }).catch(() => {});
+        return;
+      }
+      const link = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: filename });
+      link.click();
+      URL.revokeObjectURL(link.href);
+    };
+    const importData = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      let backup;
+      try {
+        backup = readBackup(await file.text());
+      } catch {
+        note.textContent = t('To nie jest kopia zapasowa QuoteDesk.');
+        return;
+      }
+      note.replaceChildren(t('Kopia zawiera ofert: {n}. Wczytanie zastąpi Twoje ustawienia.', { n: backup.quotes.length }), ' ',
+        h('button', {
+          class: 'btn small primary',
+          onClick: async () => {
+            Object.assign(settings, backup.settings, { linkSecret: settings.linkSecret });
+            await store.saveSettings(settings);
+            for (const quote of backup.quotes) await store.saveQuote(quote);
+            setCurrency(settings.profile.currency);
+            toast(t('Wczytano kopię zapasową'));
+            ctx.refreshBanners();
+            draw();
+          },
+        }, t('Wczytaj i zastąp')));
+    };
+    return h('section', { class: 'card' },
+      h('h2', {}, t('Kopia zapasowa')),
+      h('p', { class: 'small muted' }, t('Zapisz kopię ustawień i ofert w pliku. Bez klucza API i bez klucza do linków.')),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn', onClick: exportData }, t('Pobierz kopię zapasową')),
+        field(t('Wczytaj kopię'), h('input', { type: 'file', accept: 'application/json,.json', onChange: importData })),
+      ),
+      note);
+  }
+
   async function draw() {
     const logos = [await logoInput('logoLight', t('Logo na jasne tło')), await logoInput('logoDark', t('Logo na ciemne tło (opcjonalnie)'))];
     const secret = h('input', { readOnly: true, value: settings.linkSecret });
@@ -175,6 +237,8 @@ export function renderSettings(root, ctx) {
         field(t('Klucz do podpisywania linków, wklej go do config.php na serwerze'), secret),
         h('div', {}, h('button', { class: 'btn', onClick: () => copyText(settings.linkSecret, secret, toast) }, t('Kopiuj klucz'))),
       ),
+      aiCard(),
+      backupCard(),
       h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: () => autosave.flush() ?? save() }, t('Zapisz ustawienia')), status),
     );
   }

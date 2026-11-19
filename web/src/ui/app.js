@@ -2,6 +2,7 @@
 import { t, uiLang, setUiLang } from '../i18n.js';
 import { createStore } from '../store.js';
 import { setCurrency } from '../text.js';
+import { createAi, readStoredKey, storeKey } from '../ai.js';
 import { hasProfile, displayName } from '../profile.js';
 import { h } from './dom.js';
 import { renderInbox } from './inbox.js';
@@ -36,7 +37,15 @@ async function boot() {
     h('footer', { class: 'credit' }, 'QuoteDesk, made by ', h('a', { href: 'https://designbymaria.co.uk', target: '_blank', rel: 'noopener' }, 'Design by Maria')),
   );
 
-  const ctx = { store, settings, sample, downloads, toast, navigate, refreshBanners, leave: null, navToken: 0, inboxDraft: '' };
+  const ctx = {
+    store, settings, downloads, toast, navigate, refreshBanners, leave: null, navToken: 0, inboxDraft: '',
+    isArtifact: Boolean(sample),
+    sample: createAi({ sample, apiKey: readStoredKey() }),
+    setApiKey(key) {
+      storeKey(key);
+      ctx.sample = createAi({ sample, apiKey: key });
+    },
+  };
   window.addEventListener('pagehide', () => { ctx.leave?.(); });
 
   function refreshBanners() {
@@ -76,7 +85,7 @@ async function boot() {
     if (view === 'settings') renderSettings(main, ctx);
   }
 
-  navigate('inbox');
+  navigate(hasProfile(settings.profile) ? 'inbox' : 'settings');
 }
 
 boot().catch(() => {

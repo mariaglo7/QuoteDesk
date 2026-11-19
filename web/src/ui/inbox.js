@@ -67,6 +67,6 @@ export function renderInbox(root, ctx) {
     box,
     error,
     h('div', { class: 'row' }, readButton, h('button', { class: 'btn', onClick: () => navigate('desk', newQuote()) }, t('Zacznij od zera'))),
-    sample ? '' : h('p', { class: 'small muted' }, t('Claude jest dostępny po otwarciu aplikacji na claude.ai. Tutaj uzupełnisz ofertę ręcznie.')),
+    sample ? '' : h('p', { class: 'small muted' }, t('Dodaj swój klucz API w Ustawieniach, żeby Claude czytał wiadomości. Bez klucza uzupełnisz ofertę ręcznie.')),
   ));
 }

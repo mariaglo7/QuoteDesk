@@ -79,5 +79,7 @@ export function debounce(fn, ms) {
 export function claudeErrorText(e) {
   if (e?.code === 'rate_limited') return t('Spróbuj za chwilę.');
   if (e?.code === 'not_granted') return t('Claude niedostępny, uzupełnij ofertę ręcznie.');
+  if (e?.code === 'bad_key') return t('Klucz API jest nieprawidłowy. Sprawdź go w Ustawieniach.');
+  if (e?.code === 'refused') return t('Claude odmówił odpowiedzi. Uzupełnij ten fragment ręcznie.');
   return t('Claude nie odpowiedział. Spróbuj ponownie albo uzupełnij ręcznie.');
 }
