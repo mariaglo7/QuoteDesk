@@ -31,6 +31,12 @@ Maria's own estimate, 19 November 2026 (English translation of her message, made
 
 How I measured the times: estimate from memory (not timed).
 
+Later estimate from Maria (English translation of her message, 19 November 2026), for her usual quotes before QuoteDesk existed:
+- with help from a general AI chat (Claude): about 20 minutes;
+- without any AI: about 45 minutes to 1.5 hours.
+
+So there are two baselines for QuoteDesk: "no AI" and "general AI chat". A first draft of this note wrongly placed the 20 minutes in the QuoteDesk test results; Maria corrected it the same day.
+
 Important for the comparison: these three quotes were already made with help from a general AI chat (Claude), so the baseline is "general AI chat without QuoteDesk", not "no AI". To strengthen this, time the next real quote made without QuoteDesk, or note start and end times from email or Instagram timestamps.
 
 ## 3. Problems I noticed in my own process
