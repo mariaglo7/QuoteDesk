@@ -16,13 +16,13 @@ AI may help you organise it afterwards, but it may not write the facts (CM3026 r
 
 Pick 2 or 3 real past quotes. Do not write client names, use "Client A", "Client B".
 
-Facts below come from the PDF files in Maria's offers folder (file dates and page counts read by the AI, client names removed). Maria adds the columns marked "Maria".
+Times for A, B and C are Maria's own answers from memory, given in Polish on 19 November 2026. Other facts below come from the PDF files in Maria's offers folder (file dates and page counts read by the AI, client names removed). Maria adds the columns marked "Maria".
 
 | Quote | Type of work (from the PDF) | PDF created | Pages | Time from enquiry to sent offer (Maria) | Time actually spent (Maria) | What took longest (Maria) | Client outcome (Maria) | AI used to build it? (Maria) |
 |---|---|---|---|---|---|---|---|---|
-| Client A | 3 month social media and Google plan with monthly packages | 15 Oct 2026, 12:53 | 3 | | | | | |
-| Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | | | | |
-| Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | | | | |
+| Client A | 3 month social media and Google plan with monthly packages | 15 Oct 2026, 12:53 | 3 | | about 1 hour ("godzinę") | | | |
+| Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | 1 to 2 hours ("1-2 godziny") | | | |
+| Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | about 2 hours ("2 godziny") | | | |
 
 Maria's own estimate, written in Polish on 19 November 2026 (English translation by AI):
 
