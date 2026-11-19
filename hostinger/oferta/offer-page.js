@@ -99,7 +99,12 @@ async function start() {
   }
   const t = TEXT[offer.lang] ?? TEXT.pl;
   currency = offer.brand?.currency || 'GBP';
-  if (/^#[0-9a-f]{6}$/i.test(offer.brand?.accent ?? '')) document.documentElement.style.setProperty('--pink', offer.brand.accent);
+  const accent = offer.brand?.accent ?? '';
+  if (/^#[0-9a-f]{6}$/i.test(accent)) {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(accent.slice(i, i + 2), 16) / 255);
+    document.documentElement.style.setProperty('--pink', accent);
+    document.documentElement.style.setProperty('--on-pink', 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.5 ? '#FFFFFF' : '#2B211D');
+  }
   const brand = offer.brand?.name ? ` | ${offer.brand.name}` : '';
   document.documentElement.lang = offer.lang;
   document.title = `${t.title} ${offer.company || offer.name}${brand}`;

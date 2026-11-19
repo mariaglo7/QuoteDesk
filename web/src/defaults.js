@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS = {
   profile: {
     businessName: '', ownerName: '', email: '', website: '',
     logoLight: null, logoDark: null,
-    dark: '#2B211D', accent: '#2F6FDE', currency: 'GBP', includedRounds: 2,
+    dark: '#2B211D', accent: '#1F3A5F', currency: 'GBP', includedRounds: 2,
   },
   rushRate: 0.25,
   extraRoundPrice: 40,

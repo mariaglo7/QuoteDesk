@@ -187,7 +187,7 @@ test('defaults name nobody', () => {
   assert.doesNotMatch(text, /Maria|designbymaria/i);
   assert.equal(DEFAULT_SETTINGS.profile.businessName, '');
   assert.equal(DEFAULT_SETTINGS.profile.dark, '#2B211D');
-  assert.equal(DEFAULT_SETTINGS.profile.accent, '#2F6FDE');
+  assert.equal(DEFAULT_SETTINGS.profile.accent, '#1F3A5F');
   assert.equal(DEFAULT_SETTINGS.profile.currency, 'GBP');
   assert.equal(DEFAULT_SETTINGS.offerBaseUrl, '');
 });

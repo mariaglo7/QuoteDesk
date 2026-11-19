@@ -19,6 +19,20 @@ export const THEME = {
   cardRadius: 12,
 };
 
+/** Readable text colour on a background: white on dark colours, ink on light ones. */
+export function textOn(hex) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex ?? '');
+  if (!m) return THEME.ink;
+  const [r, g, b] = m.slice(1).map((v) => parseInt(v, 16) / 255);
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance < 0.5 ? '#FFFFFF' : THEME.ink;
+}
+
+/** The accent where it sits on the dark colour: a dark accent would vanish, so it becomes white. */
+export function accentOnDark(hex) {
+  return textOn(hex) === '#FFFFFF' ? '#FFFFFF' : hex;
+}
+
 /** Applies the profile colours for one render; returns a function that restores the defaults. */
 export function applyTheme(profile) {
   const saved = { ink: THEME.ink, pink: THEME.pink };

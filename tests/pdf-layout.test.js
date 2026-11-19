@@ -57,3 +57,16 @@ test('textHeight multiplies lines by leading', () => {
   const { flow } = setup();
   assert.equal(flow.textHeight(['a', 'b', 'c'], 10, 1.5), 45);
 });
+
+test('text on the accent is white for dark accents and dark for light ones', async () => {
+  const { textOn } = await import('../web/src/pdf/theme.js');
+  assert.equal(textOn('#1F3A5F'), '#FFFFFF');
+  assert.equal(textOn('#FF7AE5'), THEME.ink);
+  assert.equal(textOn('not a colour'), THEME.ink);
+});
+
+test('accent on dark surfaces turns white when the accent itself is dark', async () => {
+  const { accentOnDark } = await import('../web/src/pdf/theme.js');
+  assert.equal(accentOnDark('#1F3A5F'), '#FFFFFF');
+  assert.equal(accentOnDark('#FF7AE5'), '#FF7AE5');
+});

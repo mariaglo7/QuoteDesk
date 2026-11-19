@@ -1,25 +1,25 @@
 /* Code written with help from Claude (Anthropic) */
 /* Palette: brown, grey and white with a blue main accent and a small pink second accent. Layout: brown top bar, one work area; Desk is two columns from 860px, tabs stacked below. */
 :root {
-  --bg: #ffffff; --surface: #f5f3f1; --fg: #2b211d; --muted: #6b6461; --line: #e3dfdc;
+  --bg: #ffffff; --surface: #f4f4f5; --fg: #2b211d; --muted: #63636b; --line: #e4e4e7;
   --bar: #2b211d; --bar-fg: #ffffff;
-  --accent: #2f6fde; --accent-ink: #ffffff; --accent-soft: #e5eefc;
+  --accent: #1f3a5f; --accent-ink: #ffffff; --accent-soft: #e6ebf2;
   --pink: #d9558f; --pink-soft: #fbe6ef;
-  --ok: #1d7a4b; --warn: #a35a00; --warn-soft: #fff2dd; --bad: #b3261e;
+  --ok: #1d7a4b; --warn: #8a4b00; --warn-soft: #ececee; --bad: #b3261e;
   --font: "Poppins", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1c1816; --surface: #262120; --fg: #f3efec; --muted: #b3aaa5; --line: #3a3330;
-    --bar: #120f0e; --accent: #6f9ff0; --accent-ink: #10131a; --accent-soft: #1f2a3d;
-    --pink: #ef8cb8; --pink-soft: #43262f; --ok: #8fe3b0; --warn: #ffc86b; --warn-soft: #43321a; --bad: #ff9c94;
+    --bg: #18181b; --surface: #232326; --fg: #f3efec; --muted: #a9a9b0; --line: #36363b;
+    --bar: #120f0e; --accent: #8fb0d8; --accent-ink: #10131a; --accent-soft: #1f2a3d;
+    --pink: #ef8cb8; --pink-soft: #43262f; --ok: #8fe3b0; --warn: #ffc86b; --warn-soft: #2c2c30; --bad: #ff9c94;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1c1816; --surface: #262120; --fg: #f3efec; --muted: #b3aaa5; --line: #3a3330;
-  --bar: #120f0e; --accent: #6f9ff0; --accent-ink: #10131a; --accent-soft: #1f2a3d;
-  --pink: #ef8cb8; --pink-soft: #43262f; --ok: #8fe3b0; --warn: #ffc86b; --warn-soft: #43321a; --bad: #ff9c94;
+  --bg: #18181b; --surface: #232326; --fg: #f3efec; --muted: #a9a9b0; --line: #36363b;
+  --bar: #120f0e; --accent: #8fb0d8; --accent-ink: #10131a; --accent-soft: #1f2a3d;
+  --pink: #ef8cb8; --pink-soft: #43262f; --ok: #8fe3b0; --warn: #ffc86b; --warn-soft: #2c2c30; --bad: #ff9c94;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }

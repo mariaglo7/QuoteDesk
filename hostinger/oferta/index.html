@@ -8,7 +8,7 @@
 <title>Oferta</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
 <style>
-  :root { --ink: #2B211D; --muted: #6B6461; --line: #E3DFDC; --pink: #2F6FDE; }
+  :root { --ink: #2B211D; --muted: #6B6461; --line: #E3DFDC; --pink: #1F3A5F; --on-pink: #FFFFFF; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #fff; color: var(--ink); font-family: "Poppins", system-ui, sans-serif; font-weight: 300; line-height: 1.5; }
   main { max-width: 720px; margin: 0 auto; padding: 48px 20px 72px; display: grid; gap: 28px; }
@@ -19,12 +19,12 @@
   .row { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
   .row b { font-weight: 600; white-space: nowrap; }
   .row s { color: var(--muted); font-weight: 300; margin-right: 8px; }
-  .tag { background: var(--pink); border-radius: 99px; font-size: 12px; font-weight: 500; padding: 1px 9px; margin-left: 8px; white-space: nowrap; }
+  .tag { background: var(--pink); color: var(--on-pink); border-radius: 99px; font-size: 12px; font-weight: 500; padding: 1px 9px; margin-left: 8px; white-space: nowrap; }
   button { font: inherit; font-weight: 500; background: var(--ink); color: #fff; border: 0; border-radius: 10px; padding: 13px 22px; cursor: pointer; }
   button:disabled { opacity: .6; cursor: default; }
   button:focus-visible { outline: 2px solid var(--pink); outline-offset: 2px; }
   .box { background: var(--ink); color: #fff; border-radius: 12px; padding: 22px; display: grid; gap: 12px; justify-items: start; }
-  .box button { background: var(--pink); color: var(--ink); }
+  .box button { background: var(--pink); color: var(--on-pink); }
   .box p { margin: 0; }
 </style>
 </head>

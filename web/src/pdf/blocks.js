@@ -1,6 +1,6 @@
 // Code written with help from Claude (Anthropic)
 // Drawing blocks of the offer PDF. Each block measures itself before it draws.
-import { THEME as T } from './theme.js';
+import { THEME as T, textOn, accentOnDark } from './theme.js';
 import { formatMoney, addDays } from '../text.js';
 import { displayName } from '../profile.js';
 
@@ -278,7 +278,7 @@ function drawCard(doc, item, priced, m, x, y, width, height, dark, L) {
   for (const lines of m.bullets) {
     hairline(doc, x + pad, cy, x + width - pad, rule);
     cy += 15;
-    dot(doc, x + pad + 2.5, cy - 3.2, 2.4);
+    dot(doc, x + pad + 2.5, cy - 3.2, 2.4, dark ? accentOnDark(T.pink) : T.pink);
     setText(doc, 'light', 8.8, ink);
     drawLines(doc, lines, x + pad + 14, cy, 8.8, 1.59);
     cy += (lines.length - 1) * 14 + 6;
@@ -286,7 +286,7 @@ function drawCard(doc, item, priced, m, x, y, width, height, dark, L) {
 
   if (dark) {
     const label = L.recommended;
-    setText(doc, 'medium', 7.5, T.ink);
+    setText(doc, 'medium', 7.5, textOn(T.pink));
     const w = doc.getTextWidth(label) + 18;
     doc.setFillColor(T.pink);
     doc.roundedRect(x + pad, y - 8, w, 16, 8, 8, 'F');
@@ -421,14 +421,14 @@ export function drawBundleBanner(doc, section, totals, flow, quote) {
     const y = flow.y + 6;
     doc.setFillColor(T.ink);
     doc.roundedRect(T.margin, y, T.contentWidth, height, T.cardRadius, T.cardRadius, 'F');
-    setText(doc, 'semibold', 15, T.pink);
+    setText(doc, 'semibold', 15, accentOnDark(T.pink));
     drawLines(doc, nameLines, T.margin + 23, y + 33, 15, 1.27);
     labels.forEach((label, i) => {
       const col = Math.floor(i / rows);
       const row = i % rows;
       const lx = T.margin + 23 + col * 186;
       const ly = y + 55 + nameExtra + row * 18;
-      check(doc, lx, ly - 2.4, T.pink);
+      check(doc, lx, ly - 2.4, accentOnDark(T.pink));
       setText(doc, 'light', 9, T.white);
       doc.text(label, lx + 10, ly);
     });
