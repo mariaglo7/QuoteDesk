@@ -16,13 +16,13 @@ AI may help you organise it afterwards, but it may not write the facts (CM3026 r
 
 Pick 2 or 3 real past quotes. Do not write client names, use "Client A", "Client B".
 
-Times for A, B and C are Maria's own answers from memory, given in Polish on 19 November 2026. Other facts below come from the PDF files in Maria's offers folder (file dates and page counts read by the AI, client names removed). Maria adds the columns marked "Maria".
+Times, outcomes and AI use for A, B and C are Maria's own answers from memory, given in Polish on 19 November 2026. Other facts below come from the PDF files in Maria's offers folder (file dates and page counts read by the AI, client names removed). Maria adds the columns marked "Maria".
 
 | Quote | Type of work (from the PDF) | PDF created | Pages | Time from enquiry to sent offer (Maria) | Time actually spent (Maria) | What took longest (Maria) | Client outcome (Maria) | AI used to build it? (Maria) |
 |---|---|---|---|---|---|---|---|---|
-| Client A | 3 month social media and Google plan with monthly packages | 15 Oct 2026, 12:53 | 3 | | about 1 hour ("godzinę") | | | |
-| Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | 1 to 2 hours ("1-2 godziny") | | | |
-| Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | about 2 hours ("2 godziny") | | | |
+| Client A | 3 month social media and Google plan with monthly packages | 15 Oct 2026, 12:53 | 3 | | about 1 hour ("godzinę") | | dropped out ("zrezygnował") | yes, Claude ("pomagał mi przy nich Claude") |
+| Client B | Google profile and social media plan for a local service business with 3 locations, monthly packages | 15 Oct 2026, 14:52 | 3 | | 1 to 2 hours ("1-2 godziny") | | accepted one of the packages ("przyjął jeden z pakietów") | yes, Claude ("pomagał mi przy nich Claude") |
+| Client C | Product catalogue (2 options), A5 flyer, social media packages, one off services, launch bundle | 20 Oct 2026, 14:22 | 4 | | about 2 hours ("2 godziny") | | accepted the flyer and catalogue design; for marketing proposed a different arrangement, a percentage of sales, still being considered ("przyjął ofertę na projekt ulotki i katalogu, w kwestii marketingu zaproponował mi inne rozwiązanie, nad którym muszę się zastanowić (procent od sprzedaży)") | yes, Claude ("pomagał mi przy nich Claude") |
 
 Maria's own estimate, written in Polish on 19 November 2026 (English translation by AI):
 
@@ -30,7 +30,9 @@ Maria's own estimate, written in Polish on 19 November 2026 (English translation
 
 > The time a quote takes depends on the client, what they expect and so on. Sometimes it takes 30 minutes, sometimes 2 to 3 hours.
 
-How I measured the times: estimate from memory (not timed). To strengthen this, time the next real quote made without QuoteDesk, or note start and end times from email or Instagram timestamps.
+How I measured the times: estimate from memory (not timed).
+
+Important for the comparison: these three quotes were already made with help from a general AI chat (Claude), so the baseline is "general AI chat without QuoteDesk", not "no AI". To strengthen this, time the next real quote made without QuoteDesk, or note start and end times from email or Instagram timestamps.
 
 ## 3. Problems I noticed in my own process
 
