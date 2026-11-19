@@ -186,8 +186,8 @@ test('defaults name nobody', () => {
   const text = JSON.stringify(DEFAULT_SETTINGS);
   assert.doesNotMatch(text, /Maria|designbymaria/i);
   assert.equal(DEFAULT_SETTINGS.profile.businessName, '');
-  assert.equal(DEFAULT_SETTINGS.profile.dark, '#1F2933');
-  assert.equal(DEFAULT_SETTINGS.profile.accent, '#2BB3A3');
+  assert.equal(DEFAULT_SETTINGS.profile.dark, '#2B211D');
+  assert.equal(DEFAULT_SETTINGS.profile.accent, '#2F6FDE');
   assert.equal(DEFAULT_SETTINGS.profile.currency, 'GBP');
   assert.equal(DEFAULT_SETTINGS.offerBaseUrl, '');
 });

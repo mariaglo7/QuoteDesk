@@ -16,7 +16,7 @@
 - No Design by Maria name, logo, email or prices in code or defaults. The only exception is the author credit "QuoteDesk, made by Design by Maria" in the app footer and README (Maria, 19 Nov 2026).
 - The API key is stored only in localStorage under its own key, never in settings, db or exports.
 - Example services ship with `price: null`.
-- Neutral default colours: dark `#1F2933`, accent `#2BB3A3`.
+- Neutral default colours: dark `#2B211D`, accent `#2F6FDE`. App interface: brown, grey and white with a blue main accent and a small pink second accent.
 
 ## Review Focus
 

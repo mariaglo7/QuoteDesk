@@ -18,7 +18,7 @@ Creative freelancers who quote custom work: graphic designers, web designers, ph
 
 - Business name, owner name, email, website. The signature is built from these.
 - Logo for light backgrounds and an optional logo for dark backgrounds. Without the dark logo, the dark cover panel shows the business name in white.
-- PDF colours: a dark colour and an accent colour. Defaults are neutral (charcoal and teal); Maria sets her brown and pink in her own Settings.
+- PDF colours: a dark colour and an accent colour. Defaults are neutral (dark brown #2B211D and blue #2F6FDE, changed from charcoal and teal on Maria's request on 19 November 2026); Maria sets her brown and pink in her own Settings.
 - Currency: GBP, EUR or PLN, formatted with `Intl.NumberFormat` (`£1,110`, `1110 €`, `1110 zł`).
 - Revision rounds included and the price of an extra round.
 - Offer page address. Empty means the Link tab is hidden; PDF and message still work.
