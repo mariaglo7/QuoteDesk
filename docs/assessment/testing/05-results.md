@@ -14,6 +14,7 @@ Fill in only from real sessions. Leave a cell empty rather than guess.
 ## Observations per session
 
 ### P0
+- Reported by Maria (English translation of her message, 19 November 2026): with QuoteDesk the reply message to the client was ready in under 5 minutes.
 - What happened:
 - Errors or hesitations:
 - Most useful:
