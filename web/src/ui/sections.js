@@ -38,7 +38,7 @@ function itemEditor(section, item, quote, onChange, redraw) {
     h('div', { class: 'row' },
       h('div', { class: 'grow' }, field(t('Nazwa'), textInput(item, 'name', onChange))),
       field(t('Ilość'), numberInput(item, 'qty', () => { delete item.needsCheck; onChange(); }, { min: '1', step: '1', style: 'width:70px' })),
-      field(t('Cena ręczna (£)'), numberInput(item, 'unitPriceOverride', onChange, { style: 'width:110px' })),
+      field(t('Cena ręczna'), numberInput(item, 'unitPriceOverride', onChange, { style: 'width:110px' })),
     ),
     h('div', { class: 'row small' },
       h('span', { class: 'price' }),
@@ -59,7 +59,7 @@ function bundleEditor(section, bundle, quote, onChange, redraw) {
   return h('div', { class: 'item', 'data-bundle': bundle.id },
     h('div', { class: 'row' },
       h('div', { class: 'grow' }, field(t('Nazwa pakietu'), textInput(bundle, 'name', onChange))),
-      field(t('Cena ręczna (£)'), numberInput(bundle, 'priceOverride', onChange, { style: 'width:110px' })),
+      field(t('Cena ręczna'), numberInput(bundle, 'priceOverride', onChange, { style: 'width:110px' })),
     ),
     h('div', { class: 'chips' }, items.map((item) => h('label', { class: 'c' },
       h('input', {
@@ -137,9 +137,11 @@ export function paintPrices(root, totals, lang) {
     if (!p) return;
     el.classList.toggle('flag', p.needsPrice);
     const span = el.querySelector('.price');
+    const market = { below: ['warn', t('poniżej rynku')], within: ['ok', t('w zakresie rynku')], above: ['pink', t('powyżej rynku')] }[p.market];
     span.replaceChildren(p.needsPrice
       ? h('span', { class: 'pill warn' }, t('Do sprawdzenia'))
       : h('b', {}, `${p.priceFrom ? (lang === 'en' ? 'from ' : 'od ') : ''}${formatMoney(p.lineTotal)}${p.monthly ? (lang === 'en' ? '/month' : '/mies.') : ''}`));
+    if (market && !p.needsPrice) span.append(' ', h('span', { class: `pill ${market[0]}` }, market[1]));
   });
   root.querySelectorAll('[data-bundle]').forEach((el) => {
     const b = totals.bundles[el.dataset.bundle];

@@ -33,6 +33,7 @@ async function boot() {
     h('header', { class: 'bar' }, h('div', { class: 'bar-in' }, h('strong', { class: 'brand' }, displayName(settings.profile)), nav)),
     banners,
     main,
+    h('footer', { class: 'credit' }, 'QuoteDesk, made by ', h('a', { href: 'https://designbymaria.co.uk', target: '_blank', rel: 'noopener' }, 'Design by Maria')),
   );
 
   const ctx = { store, settings, sample, downloads, toast, navigate, refreshBanners, leave: null, navToken: 0, inboxDraft: '' };

@@ -24,6 +24,16 @@ function basePrice(service, quote, settings) {
   return roundUp5(service.price * (type?.multiplier ?? 1) * rush);
 }
 
+/** Where a price sits against the market range the user researched. Never invented by the app. */
+export function marketPosition(unitPrice, market) {
+  if (unitPrice === null || unitPrice === undefined || !market) return null;
+  const { min, max } = market;
+  if (typeof min !== 'number' || typeof max !== 'number' || min > max) return null;
+  if (unitPrice < min) return 'below';
+  if (unitPrice > max) return 'above';
+  return 'within';
+}
+
 export function priceItem(item, quote, settings) {
   const service = findService(item, settings);
   const qty = item.qty ?? 1;
@@ -34,6 +44,7 @@ export function priceItem(item, quote, settings) {
     monthly: service ? service.unit === 'month' : Boolean(item.monthly),
     priceFrom: Boolean(item.priceFrom || service?.priceFrom),
     needsPrice: unitPrice === null || Boolean(item.needsCheck),
+    market: marketPosition(unitPrice, service?.market),
   };
 }
 

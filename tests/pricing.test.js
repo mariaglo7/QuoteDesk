@@ -1,7 +1,7 @@
 // Code written with help from Claude (Anthropic)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { roundUp5, bundlePrice, priceItem, calcQuote, freezePrices } from '../web/src/pricing.js';
+import { roundUp5, bundlePrice, priceItem, calcQuote, freezePrices, marketPosition } from '../web/src/pricing.js';
 import { DEFAULT_SETTINGS } from '../web/src/defaults.js';
 import { TEST_SETTINGS } from './fixtures/settings.js';
 
@@ -146,6 +146,27 @@ test('freezePrices keeps prices when the price list changes', () => {
   const t = calcQuote(frozen, dearer);
   assert.equal(t.items.i_logo.unitPrice, 240);
   assert.equal(t.bundles.b1.price, calcQuote(q, S).bundles.b1.price);
+});
+
+const market = { min: 200, max: 600, source: 'Survey of 5 studios', date: '2026-11' };
+test('market position below, within and above', () => {
+  assert.equal(marketPosition(150, market), 'below');
+  assert.equal(marketPosition(200, market), 'within');
+  assert.equal(marketPosition(600, market), 'within');
+  assert.equal(marketPosition(650, market), 'above');
+});
+
+test('market position is null without a usable range or price', () => {
+  assert.equal(marketPosition(300, null), null);
+  assert.equal(marketPosition(null, market), null);
+  assert.equal(marketPosition(300, { min: 600, max: 200 }), null);
+  assert.equal(marketPosition(300, { min: null, max: 400 }), null);
+});
+
+test('calcQuote reports the market position from the service', () => {
+  const withMarket = { ...S, priceList: S.priceList.map((p) => (p.id === 'logo' ? { ...p, market } : p)) };
+  assert.equal(calcQuote(servicesQuote([item('logo')], { clientTypeId: 'large' }), withMarket).items.i_logo.market, 'within');
+  assert.equal(calcQuote(servicesQuote([item('post')]), withMarket).items.i_post.market, null);
 });
 
 test('default settings match the agreed values', () => {

@@ -16,6 +16,19 @@ function checkbox(obj, key, label, onChange) {
   return h('label', { class: 'c' }, h('input', { type: 'checkbox', checked: Boolean(obj[key]), onChange: (e) => { obj[key] = e.target.checked; onChange(); } }), label);
 }
 
+function marketEditor(service, onChange) {
+  service.market ??= { min: null, max: null, source: '', date: '' };
+  const m = service.market;
+  return h('div', { class: 'stack' },
+    h('p', { class: 'small muted' }, t('Zakres rynkowy z Twojego researchu. Aplikacja pokaże, gdzie wypada Twoja cena.')),
+    h('div', { class: 'grid2' },
+      field(t('Rynek od'), numberInput(m, 'min', onChange)),
+      field(t('Rynek do'), numberInput(m, 'max', onChange)),
+      field(t('Źródło'), textInput(m, 'source', onChange, { placeholder: t('np. cenniki 5 studiów z Aberdeen') })),
+      field(t('Data sprawdzenia'), textInput(m, 'date', onChange, { placeholder: '2026-11' })),
+    ));
+}
+
 function serviceEditor(service, onChange, remove) {
   return h('details', {},
     h('summary', {}, `${(uiLang() === 'en' ? service.nameEn : service.namePl) || t('Nowa usługa')}, £${service.price ?? 0}`),
@@ -23,7 +36,7 @@ function serviceEditor(service, onChange, remove) {
       h('div', { class: 'grid2' },
         field(t('Nazwa PL'), textInput(service, 'namePl', onChange)),
         field(t('Nazwa EN'), textInput(service, 'nameEn', onChange)),
-        field(t('Cena bazowa (£)'), numberInput(service, 'price', onChange)),
+        field(t('Cena bazowa'), numberInput(service, 'price', onChange)),
         field(t('Jednostka'), select(service, 'unit', UNITS, onChange)),
         field(t('Kategoria'), select(service, 'category', CATEGORIES, onChange)),
       ),
@@ -34,6 +47,7 @@ function serviceEditor(service, onChange, remove) {
         field(t('Punkty PL, jeden w linii'), linesArea(service, 'bulletsPl', onChange)),
         field(t('Punkty EN, jeden w linii'), linesArea(service, 'bulletsEn', onChange)),
       ),
+      marketEditor(service, onChange),
       h('div', { class: 'row end' }, h('button', { class: 'btn small', onClick: remove }, t('Usuń usługę'))),
     ));
 }
@@ -141,7 +155,7 @@ export function renderSettings(root, ctx) {
         h('div', { class: 'grid2' },
           settings.clientTypes.map((c) => field(uiLang() === 'en' ? c.labelEn : c.labelPl, numberInput(c, 'multiplier', changed))),
           field(t('Ekspres (0.25 to +25%)'), numberInput(settings, 'rushRate', changed)),
-          field(t('Dodatkowa runda poprawek (£)'), numberInput(settings, 'extraRoundPrice', changed)),
+          field(t('Dodatkowa runda poprawek'), numberInput(settings, 'extraRoundPrice', changed)),
           field(t('Rabat pakietowy (0.1 to 10%)'), numberInput(settings, 'bundleDiscount', changed)),
         ),
       ),
