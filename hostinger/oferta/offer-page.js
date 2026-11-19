@@ -1,25 +1,26 @@
 // Code written with help from Claude (Anthropic)
-import { parseOfferUrl, decodeOffer } from './offer.js';
+import { parseOfferUrl, decodeOffer, formatOfferMoney } from './offer.js';
 
 const TEXT = {
   pl: {
     title: 'Oferta dla', forPerson: 'Dla:', valid: 'Oferta ważna do', from: 'od', month: '/ mies.', recommended: 'Polecam',
-    invalid: 'Ten link jest nieprawidłowy', invalidHelp: 'Napisz do mnie na info@designbymaria.co.uk, a wyślę go jeszcze raz.',
-    expired: 'Oferta wygasła, napisz do mnie po aktualną', expiredHelp: 'info@designbymaria.co.uk',
+    invalid: 'Ten link jest nieprawidłowy', invalidHelp: 'Odpisz na wiadomość z ofertą, a wyślę link jeszcze raz.',
+    expired: 'Oferta wygasła', expiredHelp: 'Odpisz na wiadomość z ofertą, a przygotuję aktualną.',
     ask: 'Pełny opis znajdziesz w PDF. Masz pytania albo chcesz ruszać?', button: 'Chcę rozmawiać',
-    thanks: 'Dziękuję! Odezwę się najszybciej, jak to możliwe.', error: 'Nie udało się wysłać. Napisz na info@designbymaria.co.uk.',
+    thanks: 'Dziękuję! Odezwę się najszybciej, jak to możliwe.', error: 'Nie udało się wysłać. Odpisz proszę na wiadomość z ofertą.',
   },
   en: {
     title: 'Offer for', forPerson: 'For:', valid: 'Offer valid until', from: 'from', month: '/ month', recommended: 'Recommended',
-    invalid: 'This link is invalid', invalidHelp: 'Email me at info@designbymaria.co.uk and I will send it again.',
-    expired: 'This offer has expired, email me for an up to date one', expiredHelp: 'info@designbymaria.co.uk',
+    invalid: 'This link is invalid', invalidHelp: 'Reply to the message with the offer and I will send the link again.',
+    expired: 'This offer has expired', expiredHelp: 'Reply to the message with the offer and I will prepare an up to date one.',
     ask: 'You will find the full details in the PDF. Any questions, or ready to start?', button: "Let's talk",
-    thanks: 'Thank you! I will get back to you as soon as I can.', error: 'That did not work. Please email info@designbymaria.co.uk.',
+    thanks: 'Thank you! I will get back to you as soon as I can.', error: 'That did not work. Please reply to the message with the offer.',
   },
 };
 
 const root = document.getElementById('offer');
-const money = (n) => `£${Number(n).toLocaleString('en-GB')}`;
+let currency = 'GBP';
+const money = (n) => formatOfferMoney(n, currency);
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -97,8 +98,11 @@ async function start() {
     return;
   }
   const t = TEXT[offer.lang] ?? TEXT.pl;
+  currency = offer.brand?.currency || 'GBP';
+  if (/^#[0-9a-f]{6}$/i.test(offer.brand?.accent ?? '')) document.documentElement.style.setProperty('--pink', offer.brand.accent);
+  const brand = offer.brand?.name ? ` | ${offer.brand.name}` : '';
   document.documentElement.lang = offer.lang;
-  document.title = `${t.title} ${offer.company || offer.name} | Design by Maria`;
+  document.title = `${t.title} ${offer.company || offer.name}${brand}`;
   let check;
   try {
     check = await post('verify', link);

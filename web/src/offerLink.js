@@ -33,6 +33,15 @@ function summarizeSection(section, totals) {
   };
 }
 
+/** Kept here so the standalone offer page formats money like the app. */
+export function formatOfferMoney(n, currency = 'GBP') {
+  const code = currency || 'GBP';
+  const locale = code === 'GBP' ? 'en-GB' : 'pl-PL';
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: code, maximumFractionDigits: 0, minimumFractionDigits: 0 })
+    .format(Number(n))
+    .replace(/[\u00a0\u202f]/g, ' ');
+}
+
 export function makeOfferPayload(quote, totals, settings, today) {
   const exp = new Date(`${today}T00:00:00Z`);
   exp.setUTCDate(exp.getUTCDate() + settings.validityDays);
@@ -44,6 +53,7 @@ export function makeOfferPayload(quote, totals, settings, today) {
     lang: quote.lang,
     date: today,
     exp: exp.toISOString().slice(0, 10),
+    brand: { name: settings.profile.businessName || settings.profile.ownerName, accent: settings.profile.accent, currency: settings.profile.currency },
     sections: quote.sections.filter((s) => s.type !== 'info' && s.type !== 'value').map((s) => summarizeSection(s, totals)),
   };
 }

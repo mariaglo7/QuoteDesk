@@ -77,3 +77,15 @@ test('payload leaves out the source message', () => {
   const p = makeOfferPayload({ ...REFERENCE, sourceMessage: 'SECRET NOTE' }, T, S, '2026-10-22');
   assert.ok(!JSON.stringify(p).includes('SECRET NOTE'));
 });
+
+test('payload carries the brand name, accent and currency', () => {
+  assert.deepEqual(P.brand, { name: 'Northlight Studio', accent: '#E0457B', currency: 'GBP' });
+});
+
+test('offer page money follows the currency', async () => {
+  const { formatOfferMoney } = await import('../web/src/offerLink.js');
+  assert.equal(formatOfferMoney(1110, 'GBP'), '£1,110');
+  assert.equal(formatOfferMoney(1110, 'EUR'), '1110 €');
+  assert.equal(formatOfferMoney(12500, 'PLN'), '12 500 zł');
+  assert.equal(formatOfferMoney(35, undefined), '£35');
+});

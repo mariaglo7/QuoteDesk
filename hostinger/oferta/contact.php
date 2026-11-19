@@ -11,7 +11,7 @@ function reply(array $data): void {
     exit;
 }
 
-if (SECRET === '') reply(['ok' => false, 'error' => 'server']);
+if (SECRET === '' || MAIL_TO === '') reply(['ok' => false, 'error' => 'server']);
 
 $input = json_decode(file_get_contents('php://input'), true);
 $payload = is_array($input) ? (string)($input['p'] ?? '') : '';
