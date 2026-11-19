@@ -28,7 +28,20 @@ How I measured the times (timer, calendar, estimate from memory):
 
 Write concrete moments, not general opinions.
 
-- Example: "I rewrote the same terms in every email."
+Maria's own words, written in Polish on 19 November 2026 (original kept; English translation made with AI and checked by Maria):
+
+> Ja mam zawsze problem z wyceną, ponieważ nigdy nie chcę przesadzić z kwotą, a teraz w dobie AI część ludzi rezygnuje po usłyszeniu kwoty, ponieważ twierdzi, że za drogo i „AI zrobi im stronę”. Robię duży research, jakie kwoty biorą inne firmy, sprawdzam, co dzięki mnie może osiągnąć taka firma, czy jest to mała działalność czy duża, czy mają budżet na reklamę itd. To zajmowało mi zawsze bardzo dużo czasu, i finalnie, żeby to wszystko ubrać w słowa i w konkretną ofertę, było dla mnie dość straszne.
+
+> I always struggle with pricing because I never want to overcharge, and now, in the age of AI, some people drop out after hearing the price because they say it is too expensive and "AI will make them a website". I do a lot of research on what other companies charge, I check what the client's business could achieve thanks to my work, whether it is a small or a large business, whether they have an advertising budget and so on. This always took me a lot of time, and in the end putting all of it into words and into a concrete offer was quite daunting for me.
+
+Problems named in this account:
+- Fear of overpricing, so the price itself is hard to decide.
+- Clients compare the price with "AI will do it" and leave.
+- Market research on competitors' prices takes a lot of time.
+- Judging the client's size, goals and budget takes time.
+- Turning all of this into words and a concrete offer feels daunting.
+
+Concrete moments (add dates or examples where you can):
 -
 -
 
