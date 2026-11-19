@@ -3,11 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { roundUp5, bundlePrice, priceItem, calcQuote, freezePrices } from '../web/src/pricing.js';
 import { DEFAULT_SETTINGS } from '../web/src/defaults.js';
+import { TEST_SETTINGS } from './fixtures/settings.js';
 
 const S = {
-  ...DEFAULT_SETTINGS,
+  ...TEST_SETTINGS,
   priceList: [
-    ...DEFAULT_SETTINGS.priceList,
+    ...TEST_SETTINGS.priceList,
     { id: 'logo', namePl: 'Logo', nameEn: 'Logo', price: 200, priceFrom: false, unit: 'item', category: 'branding', applyMultiplier: true },
     { id: 'flyer', namePl: 'Ulotka', nameEn: 'Flyer', price: 75, priceFrom: false, unit: 'item', category: 'print', applyMultiplier: true },
     { id: 'page', namePl: 'Podstrona', nameEn: 'Page', price: 120, priceFrom: false, unit: 'page', category: 'website', applyMultiplier: false },
@@ -153,6 +154,19 @@ test('default settings match the agreed values', () => {
   assert.equal(DEFAULT_SETTINGS.extraRoundPrice, 40);
   assert.equal(DEFAULT_SETTINGS.rushRate, 0.25);
   assert.equal(DEFAULT_SETTINGS.validityDays, 7);
-  assert.equal(DEFAULT_SETTINGS.priceList.find((p) => p.id === 'post').price, 35);
-  assert.equal(DEFAULT_SETTINGS.priceList.find((p) => p.id === 'care').price, 50);
+});
+
+test('example services ship without prices', () => {
+  assert.ok(DEFAULT_SETTINGS.priceList.length >= 5);
+  for (const service of DEFAULT_SETTINGS.priceList) assert.equal(service.price, null, service.id);
+});
+
+test('defaults name nobody', () => {
+  const text = JSON.stringify(DEFAULT_SETTINGS);
+  assert.doesNotMatch(text, /Maria|designbymaria/i);
+  assert.equal(DEFAULT_SETTINGS.profile.businessName, '');
+  assert.equal(DEFAULT_SETTINGS.profile.dark, '#1F2933');
+  assert.equal(DEFAULT_SETTINGS.profile.accent, '#2BB3A3');
+  assert.equal(DEFAULT_SETTINGS.profile.currency, 'GBP');
+  assert.equal(DEFAULT_SETTINGS.offerBaseUrl, '');
 });

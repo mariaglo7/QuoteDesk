@@ -102,16 +102,21 @@ export function renderDesk(root, ctx, quote) {
   }
 
   async function offerUrl() {
-    if (!settings.linkSecret || totals.needsPrice) return '';
+    if (!settings.offerBaseUrl || !settings.linkSecret || totals.needsPrice) return '';
     const encoded = await encodeOffer(makeOfferPayload(quote, totals, settings, offerDay()));
     return buildOfferUrl(settings.offerBaseUrl, encoded, await signPayload(encoded, settings.linkSecret));
   }
 
   async function buildPdf() {
-    const { fonts, logos } = await loadPdfAssets();
+    const { fonts } = await loadPdfAssets();
+    const profile = {
+      ...settings.profile,
+      logoLight: await store.coverDataUrl(settings.profile.logoLight),
+      logoDark: await store.coverDataUrl(settings.profile.logoDark),
+    };
     return renderOfferPdf({
-      jsPDF: window.jspdf.jsPDF, fonts, logos, coverImage: await store.coverDataUrl(quote.coverAssetId),
-      quote, totals, settings, offerUrl: await offerUrl(), today: offerDay(), report: lastReport,
+      jsPDF: window.jspdf.jsPDF, fonts, coverImage: await store.coverDataUrl(quote.coverAssetId),
+      quote, totals, settings: { ...settings, profile }, offerUrl: await offerUrl(), today: offerDay(), report: lastReport,
     });
   }
 
@@ -236,7 +241,8 @@ export function renderDesk(root, ctx, quote) {
   }
 
   function drawSide() {
-    const tabs = [['message', t('Wiadomość')], ['pdf', 'PDF'], ['link', t('Link')]];
+    const tabs = [['message', t('Wiadomość')], ['pdf', 'PDF'], ...(settings.offerBaseUrl ? [['link', t('Link')]] : [])];
+    if (tab === 'link' && !settings.offerBaseUrl) tab = 'message';
     side.replaceChildren(
       h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([id, label]) => h('button', { class: id === tab ? 'on' : '', role: 'tab', onClick: () => { tab = id; drawSide(); } }, t(label)))),
       h('p', { class: 'small muted lock' }),

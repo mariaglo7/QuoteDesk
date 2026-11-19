@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeOfferPayload, encodeOffer, decodeOffer, signPayload, verifyPayload, buildOfferUrl, parseOfferUrl } from '../web/src/offerLink.js';
 import { calcQuote } from '../web/src/pricing.js';
-import { DEFAULT_SETTINGS as S } from '../web/src/defaults.js';
+import { TEST_SETTINGS as S } from './fixtures/settings.js';
 import { REFERENCE } from './fixtures/reference.js';
 
 const K = 'a'.repeat(64);

@@ -35,6 +35,16 @@ export function offerFileName(company, date) {
   return `${slugify(company) || 'klient'}_oferta_${stamp}.pdf`;
 }
 
-export function formatMoney(n) {
-  return `£${Number(n).toLocaleString('en-GB')}`;
+let currentCurrency = 'GBP';
+
+/** The profile currency; set once per render or when Settings change. */
+export function setCurrency(currency) {
+  currentCurrency = currency || 'GBP';
+}
+
+export function formatMoney(n, currency = currentCurrency) {
+  const locale = currency === 'GBP' ? 'en-GB' : 'pl-PL';
+  return new Intl.NumberFormat(locale, { style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 })
+    .format(Number(n))
+    .replace(/[\u00a0\u202f]/g, ' ');
 }

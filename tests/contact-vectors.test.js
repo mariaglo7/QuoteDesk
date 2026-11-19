@@ -6,7 +6,7 @@ import { writeFileSync } from 'node:fs';
 import { encodeOffer, signPayload, buildOfferUrl } from '../web/src/offerLink.js';
 
 const SECRET = 'test-secret-change-me';
-const BASE = 'https://designbymaria.co.uk/oferta/';
+const BASE = 'https://example.com/oferta/';
 const offer = (exp) => ({
   v: 1, id: `test-${exp}`, company: 'Test Bakery', name: 'Kasia', lang: 'pl', date: '2026-11-05', exp,
   sections: [{ t: 'Logo', k: 'services', i: [{ n: 'Logo', p: 280, f: false, m: false, r: false }] }],

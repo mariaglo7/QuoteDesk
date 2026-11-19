@@ -19,6 +19,14 @@ export const THEME = {
   cardRadius: 12,
 };
 
+/** Applies the profile colours for one render; returns a function that restores the defaults. */
+export function applyTheme(profile) {
+  const saved = { ink: THEME.ink, pink: THEME.pink };
+  THEME.ink = profile.dark || saved.ink;
+  THEME.pink = profile.accent || saved.pink;
+  return () => Object.assign(THEME, saved);
+}
+
 export function registerFonts(doc, fonts) {
   for (const [style, file] of [['light', 'Poppins-Light'], ['medium', 'Poppins-Medium'], ['semibold', 'Poppins-SemiBold']]) {
     doc.addFileToVFS(`${file}.ttf`, fonts[style]);

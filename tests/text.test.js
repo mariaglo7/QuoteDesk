@@ -1,7 +1,7 @@
 // Code written with help from Claude (Anthropic)
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stripDashes, slugify, offerFileName, formatMoney, addDays, toISODate } from '../web/src/text.js';
+import { stripDashes, slugify, offerFileName, formatMoney, addDays, toISODate, setCurrency } from '../web/src/text.js';
 
 test('stripDashes replaces em and en dashes', () => {
   assert.equal(stripDashes('Cześć — oto oferta – razem £970'), 'Cześć, oto oferta, razem £970');
@@ -33,6 +33,16 @@ test('offerFileName falls back to klient', () => {
 test('formatMoney groups thousands with the pound sign', () => {
   assert.equal(formatMoney(1110), '£1,110');
   assert.equal(formatMoney(35), '£35');
+});
+test('formatMoney supports euro and zloty with plain spaces', () => {
+  assert.equal(formatMoney(1110, 'EUR'), '1110 €');
+  assert.equal(formatMoney(12500, 'PLN'), '12 500 zł');
+  assert.equal(formatMoney(35, 'GBP'), '£35');
+});
+test('setCurrency changes the default', () => {
+  setCurrency('PLN');
+  assert.equal(formatMoney(280), '280 zł');
+  setCurrency('GBP');
 });
 test('addDays crosses month ends', () => {
   assert.equal(addDays('2026-10-22', 7), '2026-10-29');

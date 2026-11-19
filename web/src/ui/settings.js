@@ -2,6 +2,7 @@
 import { t, uiLang } from '../i18n.js';
 import { h, field, textInput, textArea, numberInput, linesArea, copyText, debounce } from './dom.js';
 import { newId } from '../quote.js';
+import { setCurrency } from '../text.js';
 
 const UNITS = [['item', 'sztuka'], ['page', 'podstrona'], ['month', 'miesiąc']];
 const CATEGORIES = [['branding', 'Branding'], ['print', 'Druk'], ['website', 'Strona'], ['social', 'Social media'], ['care', 'Opieka'], ['other', 'Inne']];
@@ -47,6 +48,16 @@ export function renderSettings(root, ctx) {
   root.append(page);
   const status = h('span', { class: 'small muted' });
 
+  async function toPng(file) {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve) => { canvas.toBlob(resolve, 'image/png'); });
+  }
+
   async function save() {
     try {
       await store.saveSettings(settings);
@@ -64,10 +75,53 @@ export function renderSettings(root, ctx) {
   };
   ctx.leave = () => autosave.flush();
 
-  function draw() {
+  async function logoInput(key, label) {
+    const preview = h('img', { alt: '', style: 'max-height:48px;max-width:180px;display:block;background:var(--surface);padding:4px;border-radius:6px' });
+    const url = await store.coverDataUrl(settings.profile[key]);
+    if (url) preview.src = url; else preview.hidden = true;
+    const upload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        settings.profile[key] = await store.uploadCover(await toPng(file));
+        changed();
+        draw();
+      } catch {
+        toast(t('Nie udało się dodać grafiki.'));
+      }
+    };
+    return field(label, h('div', { class: 'stack' }, preview,
+      h('input', { type: 'file', accept: 'image/png,image/jpeg,image/svg+xml', onChange: upload }),
+      settings.profile[key] ? h('div', {}, h('button', { class: 'btn small', onClick: () => { settings.profile[key] = null; changed(); draw(); } }, t('Usuń logo'))) : ''));
+  }
+
+  function profileCard(logos) {
+    const p = settings.profile;
+    const colour = (key, label) => field(label, h('input', { type: 'color', value: p[key], onInput: (e) => { p[key] = e.target.value; changed(); } }));
+    return h('section', { class: 'card' },
+      h('h2', {}, t('Profil firmy')),
+      h('p', { class: 'small muted' }, t('Te dane pojawiają się w PDF, w wiadomościach i w podpisie.')),
+      h('div', { class: 'grid2' },
+        field(t('Nazwa firmy'), textInput(p, 'businessName', changed)),
+        field(t('Imię i nazwisko'), textInput(p, 'ownerName', changed)),
+        field(t('E-mail'), textInput(p, 'email', changed, { type: 'email' })),
+        field(t('Strona www'), textInput(p, 'website', changed)),
+        field(t('Waluta'), h('select', { onChange: (e) => { p.currency = e.target.value; setCurrency(p.currency); changed(); } },
+          [['GBP', 'GBP'], ['EUR', 'EUR'], ['PLN', 'PLN']].map(([v, l]) => h('option', { value: v, selected: p.currency === v }, l)))),
+        field(t('Rundy poprawek w cenie'), numberInput(p, 'includedRounds', changed, { min: '0', step: '1' })),
+        colour('dark', t('Kolor ciemny w PDF')),
+        colour('accent', t('Kolor akcentu w PDF')),
+        logos,
+      ),
+    );
+  }
+
+  async function draw() {
+    const logos = [await logoInput('logoLight', t('Logo na jasne tło')), await logoInput('logoDark', t('Logo na ciemne tło (opcjonalnie)'))];
     const secret = h('input', { readOnly: true, value: settings.linkSecret });
     page.replaceChildren(
       h('h1', {}, t('Ustawienia')),
+      profileCard(logos),
       h('section', { class: 'card' },
         h('h2', {}, t('Cennik')),
         h('p', { class: 'small muted' }, t('Wpisz kwoty po obniżce. Opisy i punkty są opcjonalne, Claude je napisze przy ofercie.')),
@@ -75,7 +129,7 @@ export function renderSettings(root, ctx) {
         h('div', {}, h('button', {
           class: 'btn',
           onClick: () => {
-            settings.priceList.push({ id: newId(), namePl: '', nameEn: '', descPl: '', descEn: '', bulletsPl: [], bulletsEn: [], price: null, priceFrom: false, unit: 'item', category: 'other', applyMultiplier: true });
+            settings.priceList.push({ id: newId(), namePl: '', nameEn: '', descPl: '', descEn: '', bulletsPl: [], bulletsEn: [], price: null, priceFrom: false, unit: 'item', category: 'other', applyMultiplier: true, market: null });
             changed();
             draw();
             page.querySelectorAll('details')[settings.priceList.length - 1].open = true;
@@ -100,11 +154,10 @@ export function renderSettings(root, ctx) {
           field(t('Pliki PL'), textArea(settings.infoCards.pl, 'files', changed)), field(t('Pliki EN'), textArea(settings.infoCards.en, 'files', changed)),
           field(t('Instrukcja Hostingera PL, krok w linii'), textArea(settings, 'hostingerPl', changed)), field(t('Instrukcja Hostingera EN, krok w linii'), textArea(settings, 'hostingerEn', changed)),
         ),
-        field(t('Podpis'), textArea(settings, 'signature', changed)),
       ),
       h('section', { class: 'card' },
         h('h2', {}, t('Link do oferty')),
-        field(t('Adres strony z ofertami'), textInput(settings, 'offerBaseUrl', changed)),
+        field(t('Adres strony z ofertami (puste wyłącza linki)'), textInput(settings, 'offerBaseUrl', changed, { placeholder: 'https://twojastrona.pl/oferta/' })),
         field(t('Klucz do podpisywania linków, wklej go do config.php na serwerze'), secret),
         h('div', {}, h('button', { class: 'btn', onClick: () => copyText(settings.linkSecret, secret, toast) }, t('Kopiuj klucz'))),
       ),

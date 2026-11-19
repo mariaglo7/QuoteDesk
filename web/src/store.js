@@ -82,7 +82,7 @@ export async function createStore() {
     mode: backend.mode,
     async getSettings() {
       const saved = await backend.readSettings();
-      const settings = { ...DEFAULT_SETTINGS, ...saved };
+      const settings = { ...DEFAULT_SETTINGS, ...saved, profile: { ...DEFAULT_SETTINGS.profile, ...saved?.profile } };
       if (!settings.linkSecret) {
         settings.linkSecret = randomSecret();
         await backend.writeSettings(settings);

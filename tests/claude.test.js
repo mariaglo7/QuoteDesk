@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildExtractPrompt, parseExtraction, buildCopyPrompt, parseCopy, buildMessagePrompt, buildFollowUpPrompt, insertLink } from '../web/src/claude.js';
 import { calcQuote } from '../web/src/pricing.js';
-import { DEFAULT_SETTINGS as S } from '../web/src/defaults.js';
+import { TEST_SETTINGS as S } from './fixtures/settings.js';
 import { REFERENCE } from './fixtures/reference.js';
 
 const TODAY = '2026-10-22';
@@ -131,7 +131,9 @@ test('message prompt has everything Maria requires', () => {
   assert.ok(p.includes('£380'));
   assert.ok(p.includes('{{LINK}}'));
   assert.ok(!p.includes('https://x.test/#a.b'));
-  assert.ok(p.includes('info@designbymaria.co.uk'));
+  assert.ok(p.includes('jo@example.com'));
+  assert.ok(p.includes('Jo Example'));
+  assert.doesNotMatch(p, /Maria/);
   assert.ok(p.includes('czy ma domenę?'));
   assert.match(p, /2 (revision )?rounds/);
   assert.match(p, /em dash/);

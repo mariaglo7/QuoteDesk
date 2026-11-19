@@ -1,12 +1,12 @@
 // Code written with help from Claude (Anthropic)
-// Fonts and logos are published next to the page and fetched once.
+// Fonts are published next to the page and fetched once.
 
 let cache = null;
 const readText = async (path) => (await (await fetch(path)).text()).trim();
 
 export function loadPdfAssets() {
-  cache ??= Promise.all(['fonts/poppins-light.txt', 'fonts/poppins-medium.txt', 'fonts/poppins-semibold.txt', 'assets/logo-dark.txt', 'assets/logo-white.txt'].map(readText))
-    .then(([light, medium, semibold, dark, white]) => ({ fonts: { light, medium, semibold }, logos: { dark, white } }));
+  cache ??= Promise.all(['fonts/poppins-light.txt', 'fonts/poppins-medium.txt', 'fonts/poppins-semibold.txt'].map(readText))
+    .then(([light, medium, semibold]) => ({ fonts: { light, medium, semibold } }));
   return cache;
 }
 

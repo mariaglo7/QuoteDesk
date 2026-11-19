@@ -3,18 +3,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { renderOfferPdf } from '../web/src/pdf/render.js';
 import { calcQuote } from '../web/src/pricing.js';
-import { DEFAULT_SETTINGS as S } from '../web/src/defaults.js';
+import { TEST_SETTINGS as S } from './fixtures/settings.js';
 import { THEME } from '../web/src/pdf/theme.js';
 import { REFERENCE } from './fixtures/reference.js';
-import { FONTS, LOGOS, recordingPdf } from './fixtures/pdf.js';
+import { FONTS, recordingPdf } from './fixtures/pdf.js';
 
 function render(quote = REFERENCE, settings = S, extra = {}) {
   const { RecordingPdf, texts, calls } = recordingPdf();
   const totals = extra.totals ?? calcQuote(quote, settings);
   const report = {};
   const doc = renderOfferPdf({
-    jsPDF: RecordingPdf, fonts: FONTS, logos: LOGOS, coverImage: null, quote, totals, settings,
-    offerUrl: 'https://designbymaria.co.uk/oferta/#a.b', today: '2026-10-22', report, ...extra,
+    jsPDF: RecordingPdf, fonts: FONTS, coverImage: null, quote, totals, settings,
+    offerUrl: 'https://northlight.example/offer/#a.b', today: '2026-10-22', report, ...extra,
   });
   return { doc, all: texts.join(' | '), texts, calls, report };
 }
@@ -128,8 +128,8 @@ test('one service quote renders cover and one page', () => {
 });
 
 test('online link line appears when a link exists', () => {
-  assert.ok(render(simple()).all.includes('designbymaria.co.uk/oferta'));
-  assert.ok(!render(simple(), S, { offerUrl: '' }).all.includes('designbymaria.co.uk/oferta'));
+  assert.ok(render(simple()).all.includes('northlight.example/offer'));
+  assert.ok(!render(simple(), S, { offerUrl: '' }).all.includes('northlight.example/offer'));
 });
 
 test('banner lists item names when it has no labels', () => {
@@ -217,6 +217,30 @@ test('a long client name stays out of the dark panel', () => {
 test('an intro without a title is kept, an eyebrow alone draws no title', () => {
   const section = { id: 's', type: 'services', eyebrow: '', title: '', intro: 'Sam wstęp.', note: '', items: [svc('a')] };
   assert.ok(render(simple({ sections: [section] })).all.includes('Sam wstęp.'));
+});
+
+test('without logos the business name is drawn on the cover, panel and header', () => {
+  const noLogo = { ...S, profile: { ...S.profile, logoLight: null, logoDark: null } };
+  const { texts } = render(simple(), noLogo);
+  assert.ok(texts.filter((t) => t.startsWith('Northlight')).length >= 3);
+});
+
+test('profile colours are used for the dark panel and accents', () => {
+  const { report } = render();
+  assert.deepEqual(report.theme, { dark: '#22303C', accent: '#E0457B' });
+});
+
+test('the theme is restored after rendering', async () => {
+  const { THEME } = await import('../web/src/pdf/theme.js');
+  render();
+  assert.equal(THEME.pink, '#FF7AE5');
+});
+
+test('euro offer prints euro amounts', () => {
+  const eur = { ...S, profile: { ...S.profile, currency: 'EUR' } };
+  const { all } = render(simple(), eur);
+  assert.ok(all.includes('280 €'), all.slice(0, 300));
+  assert.ok(!all.includes('£'));
 });
 
 test('no bank details', () => {

@@ -2,6 +2,7 @@
 // Drawing blocks of the offer PDF. Each block measures itself before it draws.
 import { THEME as T } from './theme.js';
 import { formatMoney, addDays } from '../text.js';
+import { displayName } from '../profile.js';
 
 export const LABELS = {
   pl: {
@@ -20,7 +21,6 @@ export const LABELS = {
   },
 };
 
-const ASPECT = 357 / 900;
 
 function setText(doc, font, size, color) {
   doc.setFont('Poppins', font);
@@ -68,9 +68,25 @@ export function priceLabel(priced, L) {
   return `${priced.priceFrom ? `${L.from} ` : ''}${formatMoney(priced.lineTotal)}`;
 }
 
-export function drawPageHeader(doc, { logos, quote, L, page }) {
+function imageSize(doc, dataUrl, maxW, maxH) {
+  const p = doc.getImageProperties(dataUrl);
+  const scale = Math.min(maxW / p.width, maxH / p.height);
+  return { w: p.width * scale, h: p.height * scale };
+}
+
+function drawBrand(doc, { logo, name, x, y, maxW, maxH, size, color }) {
+  if (logo) {
+    const { w, h } = imageSize(doc, logo, maxW, maxH);
+    doc.addImage(logo, x, y, w, h);
+    return;
+  }
+  setText(doc, 'semibold', size, color);
+  doc.text(doc.splitTextToSize(name, maxW)[0], x, y + size);
+}
+
+export function drawPageHeader(doc, { profile, quote, L, page }) {
   const m = T.margin;
-  doc.addImage(logos.dark, 'PNG', m - 3, 54, 79, 79 * ASPECT, 'logo-dark', 'FAST');
+  drawBrand(doc, { logo: profile.logoLight, name: displayName(profile), x: m, y: 54, maxW: 110, maxH: 32, size: 11, color: T.ink });
   setText(doc, 'light', 8, T.muted);
   const right = T.margin + T.contentWidth;
   doc.text(`${L.offerFor} ${quote.client.company || quote.client.name}`, right, 65, { align: 'right' });
@@ -78,12 +94,12 @@ export function drawPageHeader(doc, { logos, quote, L, page }) {
   hairline(doc, m, 102, right);
 }
 
-export function drawCover(doc, { logos, coverImage, quote, L, flow, today, settings, report }) {
+export function drawCover(doc, { profile, coverImage, quote, L, flow, today, settings, report }) {
   const m = T.margin;
   const leftWidth = T.panelX - m - 20;
   doc.setFillColor(T.ink);
   doc.rect(T.panelX, 0, T.pageWidth - T.panelX, T.pageHeight, 'F');
-  doc.addImage(logos.dark, 'PNG', m - 5, 56, 132, 132 * ASPECT, 'logo-dark', 'FAST');
+  drawBrand(doc, { logo: profile.logoLight, name: displayName(profile), x: m, y: 56, maxW: 170, maxH: 56, size: 15, color: T.ink });
 
   const panelInner = T.pageWidth - T.panelX - 68;
   const panelX = T.panelX + 34;
@@ -92,8 +108,12 @@ export function drawCover(doc, { logos, coverImage, quote, L, flow, today, setti
     const w = panelInner;
     const h = Math.min(w * (props.height / props.width), 340);
     doc.addImage(coverImage, panelX + (panelInner - h * (props.width / props.height)) / 2, 205, h * (props.width / props.height), h);
+  } else if (profile.logoDark) {
+    const { w, h } = imageSize(doc, profile.logoDark, panelInner, 120);
+    doc.addImage(profile.logoDark, panelX, 240, w, h);
   } else {
-    doc.addImage(logos.white, 'PNG', panelX, 240, panelInner, panelInner * ASPECT, 'logo-white', 'FAST');
+    setText(doc, 'semibold', 20, T.white);
+    drawLines(doc, doc.splitTextToSize(displayName(profile), panelInner).slice(0, 3), panelX, 260, 20, 1.2);
   }
 
   const list = quote.coverList ?? quote.sections.map((s) => s.title).filter(Boolean);
@@ -431,7 +451,7 @@ export function drawBundleBanner(doc, section, totals, flow, quote) {
 export function drawInfoCards(doc, section, flow, L, settings, lang) {
   const defaults = settings.infoCards[lang];
   const cards = [
-    [L.included, section.included || defaults.included],
+    [L.included, (section.included || defaults.included).replaceAll('{rounds}', settings.profile.includedRounds)],
     [L.files, section.files || defaults.files],
     [L.time, section.time || L.timeDefault],
   ];
@@ -487,12 +507,12 @@ function wrapAfterBold(doc, term, extraRound, width) {
   return { lines, start };
 }
 
-export function drawTerms(doc, { terms, flow, L, offerUrl, extraRound, report }) {
+export function drawTerms(doc, { terms, flow, L, offerUrl, extraRound, rounds, report }) {
   const colGap = 28;
   const width = (T.contentWidth - colGap) / 2;
   const rows = [];
   for (let i = 0; i < terms.length; i += 2) rows.push(terms.slice(i, i + 2));
-  const wrapped = terms.map((t) => wrapAfterBold(doc, t, extraRound, width));
+  const wrapped = terms.map((t) => wrapAfterBold(doc, { ...t, text: t.text.replaceAll('{rounds}', rounds) }, extraRound, width));
   const rowHeight = (r) => Math.max(wrapped[r * 2].lines.length, wrapped[r * 2 + 1]?.lines.length ?? 0) * 14.5 + 20;
   const total = rows.reduce((s, _, r) => s + rowHeight(r), 34) + (offerUrl ? 22 : 0);
   flow.ensure(total);

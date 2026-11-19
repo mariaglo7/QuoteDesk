@@ -1,8 +1,9 @@
 // Code written with help from Claude (Anthropic)
 import { t, uiLang, setUiLang } from '../i18n.js';
 import { createStore } from '../store.js';
+import { setCurrency } from '../text.js';
+import { hasProfile, displayName } from '../profile.js';
 import { h } from './dom.js';
-import { loadPdfAssets } from './pdfAssets.js';
 import { renderInbox } from './inbox.js';
 import { renderDesk } from './desk.js';
 import { renderQuotes } from './quotes.js';
@@ -22,13 +23,14 @@ async function boot() {
   const settings = await store.getSettings();
   setUiLang(settings.uiLang);
   const use = (name) => (window.claude?.use ? window.claude.use(name) : Promise.resolve(null));
-  const [sample, downloads, { logos }] = await Promise.all([use('sample'), use('downloads'), loadPdfAssets()]);
+  setCurrency(settings.profile.currency);
+  const [sample, downloads] = await Promise.all([use('sample'), use('downloads')]);
 
   const nav = h('nav', { class: 'nav', 'aria-label': 'Menu' });
   const banners = h('div');
   const main = h('main');
   app.replaceChildren(
-    h('header', { class: 'bar' }, h('div', { class: 'bar-in' }, h('img', { src: `data:image/png;base64,${logos.white}`, alt: 'Design by Maria' }), nav)),
+    h('header', { class: 'bar' }, h('div', { class: 'bar-in' }, h('strong', { class: 'brand' }, displayName(settings.profile)), nav)),
     banners,
     main,
   );
@@ -37,10 +39,12 @@ async function boot() {
   window.addEventListener('pagehide', () => { ctx.leave?.(); });
 
   function refreshBanners() {
-    const paidServices = settings.priceList.filter((p) => !['post', 'care'].includes(p.id)).length;
+    const pricedServices = settings.priceList.filter((p) => p.price).length;
+    document.querySelector('.brand').textContent = displayName(settings.profile);
     banners.replaceChildren(
       store.mode === 'local' ? h('div', { class: 'banner' }, t('Zapis tylko na tym urządzeniu.')) : '',
-      paidServices === 0 ? h('div', { class: 'banner' }, t('Cennik ma tylko post i opiekę nad stroną. '), h('button', { class: 'btn link', onClick: () => navigate('settings') }, t('Uzupełnij cennik'))) : '',
+      !hasProfile(settings.profile) ? h('div', { class: 'banner' }, t('Uzupełnij profil firmy, żeby oferty miały Twoje dane. '), h('button', { class: 'btn link', onClick: () => navigate('settings') }, t('Otwórz Ustawienia'))) : '',
+      pricedServices === 0 ? h('div', { class: 'banner' }, t('Cennik nie ma jeszcze cen. '), h('button', { class: 'btn link', onClick: () => navigate('settings') }, t('Uzupełnij cennik'))) : '',
     );
   }
 

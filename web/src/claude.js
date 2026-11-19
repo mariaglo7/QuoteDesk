@@ -2,10 +2,14 @@
 // Prompts for Claude and strict parsing of its answers. Claude never sets a price.
 import { stripDashes, addDays } from './text.js';
 import { newId, emptyItem, itemFromService, offerLines } from './quote.js';
+import { signatureFrom } from './profile.js';
 
-const VOICE = `You write for Maria, who runs Design by Maria, a one person design studio in Aberdeen.
-Her voice: polite, concrete, warm, short sentences, no filler, no sales clichés.
+function voice(profile) {
+  const who = [profile.ownerName, profile.businessName && `who runs ${profile.businessName}`].filter(Boolean).join(', ') || 'a freelancer';
+  return `You write for ${who}, a creative freelancer.
+Their voice: polite, concrete, warm, short sentences, no filler, no sales clichés.
 Never use an em dash, an en dash or a spaced hyphen. Use a comma or a colon instead.`;
+}
 
 const languageName = (lang) => (lang === 'en' ? 'English' : 'Polish');
 
@@ -21,7 +25,7 @@ export function buildExtractPrompt(message, settings, today) {
     .map((p) => `${p.id}: ${p.namePl} / ${p.nameEn} (${p.category}, unit ${p.unit})`)
     .join('\n');
   const types = settings.clientTypes.map((c) => `${c.id}: ${c.labelEn}`).join('\n');
-  return `Read this enquiry sent to a design studio and extract what the client wants. Today is ${today}.
+  return `Read this enquiry sent to a creative freelancer and extract what the client wants. Today is ${today}.
 
 Price list ids:
 ${services}
@@ -105,16 +109,16 @@ export function parseExtraction(raw, settings, today) {
   };
 }
 
-export function buildCopyPrompt({ quote }) {
+export function buildCopyPrompt({ quote, settings }) {
   const outline = quote.sections.filter((s) => s.type !== 'info').map((s) => ({
     id: s.id, type: s.type, eyebrow: s.eyebrow, title: s.title, intro: s.intro,
     items: (s.items ?? []).map((i) => ({ id: i.id, name: i.name, subtitle: i.subtitle, description: i.description, bullets: i.bullets })),
   }));
-  return `${VOICE}
+  return `${voice(settings.profile)}
 
 Write the text of an offer PDF in ${languageName(quote.lang)} for ${quote.client.company || quote.client.name || 'the client'}.
 ${addressRule(quote)} The form of address code is "${quote.address}".
-Speak about benefits for this client, not about Maria. Never mention prices. Keep existing good text.
+Speak about benefits for this client, not about the freelancer. Never mention prices. Keep existing good text.
 needs: 2 to 4 rows naming what the client needs, label is one word, text is one or two sentences.
 eyebrow: 1 to 3 words. title: a short heading without a final full stop. intro: at most 2 sentences.
 Options: subtitle is a few words, bullets are 3 to 5 short points. Services: description is at most 2 sentences.
@@ -185,16 +189,16 @@ Prices, never change them and never add new ones:
 ${offerLines(quote, totals).join('\n')}
 Online offer link: ${offerUrl ? 'write exactly {{LINK}} where the link belongs' : '(not available, leave it out)'}
 Signature, use exactly:
-${settings.signature}`;
+${signatureFrom(settings.profile)}`;
 }
 
 export function buildMessagePrompt({ quote, totals, settings, offerUrl, tone = 'default' }) {
   const hosting = totals.hasWebsite ? 'Mention that hosting and the domain are bought by the client on their own account.' : '';
   const missing = quote.missing.length ? `Ask these questions at the end:\n${quote.missing.join('\n')}` : '';
-  return `${VOICE}
+  return `${voice(settings.profile)}
 
 Write a reply to a client in ${languageName(quote.lang)}, ready to paste into a DM or an email. ${addressRule(quote)}
-Thank them, summarise the offer with its key prices, mention 2 revision rounds are included and that work starts after a 50% deposit by bank transfer, say the PDF offer is attached and give the online link. ${hosting}
+Thank them, summarise the offer with its key prices, mention ${settings.profile.includedRounds} revision rounds are included and that work starts after a 50% deposit by bank transfer, say the PDF offer is attached and give the online link. ${hosting}
 ${TONES[tone] ?? TONES.default}
 ${missing}
 
@@ -207,7 +211,7 @@ Reply only with the message text.`;
 }
 
 export function buildFollowUpPrompt({ quote, totals, settings, offerUrl }) {
-  return `${VOICE}
+  return `${voice(settings.profile)}
 
 Write a short, polite follow up in ${languageName(quote.lang)} to a client who has not replied to an offer sent a few days ago. ${addressRule(quote)}
 No pressure. Ask if they have questions and mention the offer is valid for ${settings.validityDays} days.

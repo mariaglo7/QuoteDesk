@@ -1,8 +1,8 @@
 // Code written with help from Claude (Anthropic)
 // Builds the whole offer PDF from a quote, in the style of the Harbour Light Co reference.
-import { THEME, registerFonts } from './theme.js';
+import { THEME, registerFonts, applyTheme } from './theme.js';
 import { createFlow } from './layout.js';
-import { formatMoney } from '../text.js';
+import { formatMoney, setCurrency } from '../text.js';
 import {
   LABELS, drawCover, drawPageHeader, measureSectionHead, drawSectionHead, measureOptionRow, drawOptionCards,
   measureServiceRow, drawServiceRows, measureBanner, measureBundleStart, drawBundleRows, drawBundleBanner, drawInfoCards, drawNote, drawTerms, drawHostingerPage,
@@ -46,7 +46,19 @@ function drawSection(doc, section, ctx) {
   if (section.note) drawNote(doc, section.note, flow);
 }
 
-export function renderOfferPdf({ jsPDF, fonts, logos, coverImage = null, quote, totals, settings, offerUrl = '', today, compress = true, report = {} }) {
+export function renderOfferPdf({ jsPDF, fonts, coverImage = null, quote, totals, settings, offerUrl = '', today, compress = true, report = {} }) {
+  const { profile } = settings;
+  setCurrency(profile.currency);
+  const restoreTheme = applyTheme(profile);
+  report.theme = { dark: THEME.ink, accent: THEME.pink };
+  try {
+    return draw({ jsPDF, fonts, coverImage, quote, totals, settings, offerUrl, today, compress, report, profile });
+  } finally {
+    restoreTheme();
+  }
+}
+
+function draw({ jsPDF, fonts, coverImage, quote, totals, settings, offerUrl, today, compress, report, profile }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress });
   registerFonts(doc, fonts);
   const L = LABELS[quote.lang] ?? LABELS.pl;
@@ -55,8 +67,8 @@ export function renderOfferPdf({ jsPDF, fonts, logos, coverImage = null, quote, 
   report.overflow = [];
   doc.setProperties({ title: `${L.offerFor} ${quote.client.company || quote.client.name}` });
 
-  const flow = createFlow({ doc, header: (page) => drawPageHeader(doc, { logos, quote, L, page }) });
-  drawCover(doc, { logos, coverImage, quote, L, flow, today, settings, report });
+  const flow = createFlow({ doc, header: (page) => drawPageHeader(doc, { profile, quote, L, page }) });
+  drawCover(doc, { profile, coverImage, quote, L, flow, today, settings, report });
 
   flow.newPage();
   const ctx = { flow, totals, L, settings, quote, report };
@@ -66,6 +78,7 @@ export function renderOfferPdf({ jsPDF, fonts, logos, coverImage = null, quote, 
     report,
     terms: visibleTerms(settings, quote.lang, totals), flow, L, offerUrl,
     extraRound: formatMoney(settings.extraRoundPrice),
+    rounds: String(profile.includedRounds),
   });
   if (totals.hasWebsite) {
     drawHostingerPage(doc, { text: quote.lang === 'en' ? settings.hostingerEn : settings.hostingerPl, flow, L });

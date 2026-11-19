@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fallbackMessage, fallbackFollowUp } from '../web/src/templates.js';
 import { calcQuote } from '../web/src/pricing.js';
-import { DEFAULT_SETTINGS as S } from '../web/src/defaults.js';
+import { TEST_SETTINGS as S } from './fixtures/settings.js';
 import { REFERENCE } from './fixtures/reference.js';
 
 const T = calcQuote(REFERENCE, S);
@@ -14,8 +14,9 @@ test('fallback PL has prices, link, signature and no dashes', () => {
   const m = fallbackMessage(args());
   assert.ok(m.includes('£380'));
   assert.ok(m.includes('https://x.test/#a.b'));
-  assert.ok(m.includes('info@designbymaria.co.uk'));
-  assert.ok(m.includes('2 rundy poprawek'));
+  assert.ok(m.includes('jo@example.com'));
+  assert.ok(m.includes('Northlight Studio'));
+  assert.ok(m.includes('Rundy poprawek w cenie: 2'));
   noDashes(m);
 });
 
